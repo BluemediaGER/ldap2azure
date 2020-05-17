@@ -1,5 +1,7 @@
 # ldap2azure
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8c5a9fad54cc4c75ab210df2bb0d3e11)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=BluemediaGER/ldap2azure&amp;utm_campaign=Badge_Grade)  
+
 ldap2azure is a simple tool for automatically synchronizing and updating users from any standard LDAP to an Azure Active Directory.  
 
 ## Built With  
