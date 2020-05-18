@@ -11,10 +11,10 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
 
-public class H2Provider {
+public class H2Helper {
 
     /** SLF4J logger for usage in this class */
-    private static final Logger LOG = LoggerFactory.getLogger(H2Provider.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(H2Helper.class.getName());
 
     /** Connection source for caching database */
     private static ConnectionSource cacheConnectionSource;
