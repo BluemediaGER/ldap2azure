@@ -11,6 +11,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
 
+/**
+ * Class for access to and management of the H2 databases
+ *
+ * @author Oliver Traber
+ */
 public class H2Helper {
 
     /** SLF4J logger for usage in this class */
