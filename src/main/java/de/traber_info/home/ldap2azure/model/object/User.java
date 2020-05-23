@@ -116,83 +116,159 @@ public class User {
         }
     }
 
+    /**
+     * Check if the hash of two user instances is the same.
+     * @param user User instance to check against.
+     * @return true if the hash of the two user instances are equal, or false if not.
+     */
     public boolean isHashEqual(User user) {
         return hash.equals(user.hash);
     }
 
+    /**
+     * Get the internal ldap2azure id of the user.
+     * @return Internal ldap2azure id of the user.
+     */
     @JsonProperty("_id")
     public String getId() {
         return id;
     }
 
+    /**
+     * Get the immutable id of the user in the source ldap.
+     * @return Immutable id of the user in the source ldap.
+     */
     @JsonProperty("onPremisesImmutableId")
     public String getOnPremisesImmutableId() {
         return onPremisesImmutableId;
     }
 
+    /**
+     * Get the immutable id of the user in Azure AD.
+     * @return Immutable id of the user in Azure AD.
+     */
     @JsonProperty("azureImmutableId")
     public String getAzureImmutableId() {
         return azureImmutableId;
     }
 
+    /**
+     * Get the given name of the user in Azure AD.
+     * @return Given name of the user in Azure AD.
+     */
     @JsonProperty("givenName")
     public String getGivenName() {
         return givenName;
     }
 
+    /**
+     * Get the surname of the user in Azure AD.
+     * @return Surname of the user in Azure AD.
+     */
     @JsonProperty("surname")
     public String getSurname() {
         return surname;
     }
 
+    /**
+     * Get the display name of the user in Azure AD.
+     * @return Display name of the user in Azure AD.
+     */
     @JsonProperty("displayName")
     public String getDisplayName() {
         return displayName;
     }
 
+    /**
+     * Get the mail nickname of the user in Azure AD.
+     * @return Mail nickname of the user in Azure AD.
+     */
     @JsonProperty("mailNickname")
     public String getMailNickname() {
         return mailNickname;
     }
 
+    /**
+     * Get the user principal name of the user in Azure AD.
+     * @return User principal name of the user in Azure AD.
+     */
     @JsonProperty("userPrincipalName")
     public String getUserPrincipalName() {
         return userPrincipalName;
     }
 
+    /**
+     * Get the MD5 hash of the users details.
+     * @return MD5 hash of the users deatils.
+     */
     @JsonProperty("hash")
     public String getHash() {
         return hash;
     }
 
+    /**
+     * Get the current sync state of the user.
+     * @return Current sync state of the user.
+     */
     @JsonProperty("syncState")
     public SyncState getSyncState() {
         return syncState;
     }
 
+    /**
+     * Get the current change state of the user.
+     * @return Current change state of the user.
+     */
     @JsonProperty("changeState")
     public ChangeState getChangeState() {
         return changeState;
     }
 
+    /**
+     * Get the {@link LocalDateTime} the user was last changed at.
+     * @return {@link LocalDateTime} the user was last changed at.
+     */
     @JsonProperty("lastChanged")
     public LocalDateTime getLastChanged() {
         return lastChanged;
     }
 
+    /**
+     * Get the id of the last sync that made changed to the user.
+     * @return Id of the last sync that made changed to the user.
+     */
     @JsonProperty("lastSyncId")
     public String getLastSyncId() {
         return lastSyncId;
     }
 
-    public void setSyncState(SyncState state) {
-        this.syncState = state;
+    /**
+     * Set the sync state of the user.
+     * @param syncState New {@link SyncState} that should be set for the user.
+     */
+    public void setSyncState(SyncState syncState) {
+        this.syncState = syncState;
     }
 
+    /**
+     * Set the change state of the user.
+     * @param changeState New {@link ChangeState} that should be set for the user.
+     */
+    public void setChangeState(ChangeState changeState) {
+        this.changeState = changeState;
+    }
+
+    /**
+     * Reset the last changed time for the user.
+     */
     public void resetLastChanged() {
         this.lastChanged = LocalDateTime.now();
     }
 
+    /**
+     * Set the id of the last sync that changed the user object.
+     * @param lastSyncId Id of the last sync that changed the user object.
+     */
     public void setLastSyncId(String lastSyncId) {
         this.lastSyncId = lastSyncId;
     }
