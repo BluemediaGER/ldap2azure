@@ -95,7 +95,7 @@ public class User {
      * @param mailNickname Mail nickname of the user in Azure AD
      * @param userPrincipalName Principal name of the user in Azure AD
      */
-    private User(String id, String onPremisesImmutableId, String azureImmutableId, String givenName, String surname, String displayName, String mailNickname, String userPrincipalName) {
+    public User(String id, String onPremisesImmutableId, String azureImmutableId, String givenName, String surname, String displayName, String mailNickname, String userPrincipalName) {
         this.id = id;
         this.onPremisesImmutableId = onPremisesImmutableId;
         this.azureImmutableId = azureImmutableId;
