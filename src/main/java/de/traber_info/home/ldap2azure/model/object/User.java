@@ -117,6 +117,35 @@ public class User {
     }
 
     /**
+     * Create a new instance of {@link User} from an existing Azure AD {@link com.microsoft.graph.models.extensions.User}.
+     * @param user Existing Azure AD {@link com.microsoft.graph.models.extensions.User} object.
+     * @return New instance of {@link User} containing the same attributes as the Azure AD user model.
+     */
+    public static User fromAzureUser(com.microsoft.graph.models.extensions.User user) {
+        User dbUser = new User();
+        dbUser.id = user.id;
+        dbUser.onPremisesImmutableId = user.onPremisesImmutableId;
+        dbUser.givenName = user.givenName;
+        dbUser.surname = user.surname;
+        dbUser.displayName = user.displayName;
+        dbUser.mailNickname = user.mailNickname;
+        dbUser.userPrincipalName = user.userPrincipalName;
+        dbUser.lastChanged = LocalDateTime.now();
+
+        String hashBase = user.givenName + user.surname + user.displayName + user.mailNickname + user.userPrincipalName;
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            dbUser.hash = Base64.getEncoder().encodeToString(digest.digest(hashBase.getBytes()));
+            LOG.trace("Converted {} to hash {}", hashBase, dbUser.hash);
+        } catch (NoSuchAlgorithmException ex) {
+            LOG.error("An unexpected error occurred", ex);
+        }
+
+        return dbUser;
+    }
+
+    /**
      * Check if the hash of two user instances is the same.
      * @param user User instance to check against.
      * @return true if the hash of the two user instances are equal, or false if not.
@@ -271,6 +300,22 @@ public class User {
      */
     public void setLastSyncId(String lastSyncId) {
         this.lastSyncId = lastSyncId;
+    }
+
+    /**
+     * Convert this instance of {@link User} to an instance of {@link com.microsoft.graph.models.extensions.User}
+     * @return New instance of an Azure AD {@link com.microsoft.graph.models.extensions.User} containing the same details as this class.
+     */
+    public com.microsoft.graph.models.extensions.User toAzureUser() {
+        com.microsoft.graph.models.extensions.User user = new com.microsoft.graph.models.extensions.User();
+        user.id = this.id;
+        user.onPremisesImmutableId = this.onPremisesImmutableId;
+        user.givenName = this.givenName;
+        user.surname = this.surname;
+        user.displayName = this.displayName;
+        user.mailNickname = this.mailNickname;
+        user.userPrincipalName = this.userPrincipalName;
+        return user;
     }
 
 }
