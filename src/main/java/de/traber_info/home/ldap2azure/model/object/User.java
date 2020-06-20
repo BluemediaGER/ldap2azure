@@ -95,7 +95,8 @@ public class User {
      * @param mailNickname Mail nickname of the user in Azure AD
      * @param userPrincipalName Principal name of the user in Azure AD
      */
-    public User(String id, String onPremisesImmutableId, String azureImmutableId, String givenName, String surname, String displayName, String mailNickname, String userPrincipalName) {
+    public User(String id, String onPremisesImmutableId, String azureImmutableId, String givenName, String surname,
+                String displayName, String mailNickname, String userPrincipalName) {
         this.id = id;
         this.onPremisesImmutableId = onPremisesImmutableId;
         this.azureImmutableId = azureImmutableId;
@@ -117,7 +118,23 @@ public class User {
     }
 
     /**
-     * Create a new instance of {@link User} from an existing Azure AD {@link com.microsoft.graph.models.extensions.User}.
+     * Set the internal id of the user.
+     * @param id Internal id of the user.
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * Set the Azure Immutable AD id of the user.
+     * @param azureImmutableId Azure Immutable AD id of the user.
+     */
+    public void setAzureImmutableId(String azureImmutableId) {
+        this.azureImmutableId = azureImmutableId;
+    }
+
+    /**
+     * Create a new instance of {@link User} from existing Azure AD {@link com.microsoft.graph.models.extensions.User}.
      * @param user Existing Azure AD {@link com.microsoft.graph.models.extensions.User} object.
      * @return New instance of {@link User} containing the same attributes as the Azure AD user model.
      */
@@ -304,7 +321,8 @@ public class User {
 
     /**
      * Convert this instance of {@link User} to an instance of {@link com.microsoft.graph.models.extensions.User}
-     * @return New instance of an Azure AD {@link com.microsoft.graph.models.extensions.User} containing the same details as this class.
+     * @return New instance of an Azure AD {@link com.microsoft.graph.models.extensions.User}
+     * containing the same details as this class.
      */
     public com.microsoft.graph.models.extensions.User toAzureUser() {
         com.microsoft.graph.models.extensions.User user = new com.microsoft.graph.models.extensions.User();

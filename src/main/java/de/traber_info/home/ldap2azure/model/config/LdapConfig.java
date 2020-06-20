@@ -2,8 +2,10 @@ package de.traber_info.home.ldap2azure.model.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 /**
- * Model for all configuration variables used to connect and read from the source LDAP
+ * Model for all configuration variables used to connect and read from the source LDAP.
  *
  * @author Oliver Traber
  */
@@ -29,9 +31,11 @@ public class LdapConfig {
     @JsonProperty("ldapSearchFilter")
     private String searchFilter;
 
-    /** Properties which should be read from the LDAP directory. These can be used in user build pattern to build the user object. */
-    @JsonProperty("ldapProperties")
-    private String[] ldapProperties;
+    /** Attributes which should be read from the LDAP directory.
+     * These can be used in user build pattern to build the user object.
+     */
+    @JsonProperty("ldapAttributes")
+    private List<LdapAttribute> ldapAttributes;
 
     /** Boolean representing if SSL certificate errors should be ignored while connection to the LDAP server */
     @JsonProperty("ignoreSSLErrors")
@@ -81,8 +85,8 @@ public class LdapConfig {
      * Get the properties which should be read from the LDAP directory. These can be used in user build pattern to build the user object.
      * @return The properties which should be read from the LDAP directory
      */
-    public String[] getLdapProperties() {
-        return ldapProperties;
+    public List<LdapAttribute> getLdapAttributes() {
+        return ldapAttributes;
     }
 
     /**

@@ -44,7 +44,7 @@ public class H2Helper {
     public static void init(boolean enableDebuggingConsole) {
         try {
             cacheConnectionSource = new JdbcConnectionSource("jdbc:h2:mem:cache");
-            persistentConnectionSource = new JdbcConnectionSource("jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure.db");
+            persistentConnectionSource = new JdbcConnectionSource("jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure");
 
             cacheUserDao = new UserDAOImpl(DaoManager.createDao(cacheConnectionSource, User.class));
             TableUtils.createTableIfNotExists(cacheConnectionSource, User.class);
@@ -54,6 +54,8 @@ public class H2Helper {
 
             if (enableDebuggingConsole) {
                 LOG.warn("Debugging mode is active. This will open an unsecured H2 Console on port 8082 of your host machine and is not recommended in an production environment.");
+                LOG.info("DEBUG - MemCacheDB - jdbc:h2:mem:cache");
+                LOG.info("DEBUG - FileDB - {}", "jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure");
                 Server.createWebServer("-web", "-webAllowOthers", "-webPort" , "8082").start();
             }
         } catch (SQLException | URISyntaxException ex) {

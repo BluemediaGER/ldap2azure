@@ -1,6 +1,7 @@
 package de.traber_info.home.ldap2azure;
 
 import de.traber_info.home.ldap2azure.h2.H2Helper;
+import de.traber_info.home.ldap2azure.service.LdapImportService;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,9 @@ public class Ldap2Azure {
 
         // Initialize H2 databases
         H2Helper.init(ConfigUtil.getConfig().getGeneralConfig().isDebuggingEnabled());
+
+        // Import from source ldap
+        LdapImportService.run();
 
     }
 
