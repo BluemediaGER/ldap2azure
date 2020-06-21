@@ -27,7 +27,7 @@ public class SyncJob implements Job {
     public void execute(JobExecutionContext jobExecutionContext) {
         LdapImportService.run();
         try {
-            AzureSyncService.run();
+            new AzureSyncService().run();
         } catch (SQLException ex) {
             LOG.error("An unexpected error occurred", ex);
         }

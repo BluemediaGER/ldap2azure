@@ -37,21 +37,50 @@ public class AzureSyncService {
     /** RandomString used to generate random passwords for new users */
     private static final RandomString random = new RandomString(24);
 
+    /** Amount of users created by the sync */
+    private long usersCreated = 0L;
+    /** Amount of users changed by this sync */
+    private long usersChanged = 0L;
+    /** Amount of users deleted by this sync */
+    private long usersDeleted = 0L;
+    /** Amount of users that failed to sync */
+    private long usersFailing = 0L;
+
+    /** Instance of the UserDAO used to access the database */
+    private UserDAOImpl userDAO = H2Helper.getUserDao();
+
+    /** Instance of the GraphServiceClient used to make changed in Azure AD */
+    private IGraphServiceClient msGraphServiceClient = GraphClientUtil.getGraphServiceClient();
+
     /**
      * Run an sync with Azure AD.
      */
-    public static void run() throws SQLException {
+    public void run() throws SQLException {
         LOG.info("Beginning sync to Azure AD..");
+
         String syncId = UUID.randomUUID().toString();
         LocalDateTime syncBegin = LocalDateTime.now();
 
-        long usersCreated = 0L;
-        long usersChanged = 0L;
-        long usersDeleted = 0L;
-        long usersFailing = 0L;
+        createUsers(syncId);
+        updateUsers(syncId);
+        deleteUsers();
 
-        UserDAOImpl userDAO = H2Helper.getUserDao();
+        LocalDateTime syncEnd = LocalDateTime.now();
 
+        H2Helper.getSyncDao().persist(
+                new Sync(syncId, syncBegin, syncEnd, usersCreated, usersChanged, usersDeleted, usersFailing));
+
+        LOG.info("Azure AD sync {} finished. Result: {} NEW, {} CHANGED, {} DELETED, {} FAILED",
+                syncId, usersCreated, usersChanged, usersDeleted, usersFailing);
+
+    }
+
+    /**
+     * Create new users in Azure AD that are pending for synchronization.
+     * @param syncId Id of this sync. Used to set the lastSyncId attribute in the User object.
+     * @throws SQLException Thrown if an error occurs while querying the database.
+     */
+    private void createUsers(String syncId) throws SQLException {
         // Query new users, which are pending for synchronization
         QueryBuilder<User, String> newUserQueryBuilder = userDAO.getQueryBuilder();
         newUserQueryBuilder.where()
@@ -59,24 +88,6 @@ public class AzureSyncService {
                 .and()
                 .eq("syncState", SyncState.PENDING.toValue());
         List<User> newUsers = userDAO.query(newUserQueryBuilder);
-
-        //Query changed users, which are pending for synchronization
-        QueryBuilder<User, String> changedUserQueryBuilder = userDAO.getQueryBuilder();
-        changedUserQueryBuilder.where()
-                .eq("changeState", ChangeState.CHANGED.toValue())
-                .and()
-                .eq("syncState", SyncState.PENDING.toValue());
-        List<User> changedUsers = userDAO.query(changedUserQueryBuilder);
-
-        // Query deleted users, which are pending for synchronization
-        QueryBuilder<User, String> deletedUserQueryBuilder = userDAO.getQueryBuilder();
-        deletedUserQueryBuilder.where()
-                .eq("changeState", ChangeState.DELETED.toValue())
-                .and()
-                .eq("syncState", SyncState.PENDING.toValue());
-        List<User> deletedUsers = userDAO.query(deletedUserQueryBuilder);
-
-        IGraphServiceClient msGraphServiceClient = GraphClientUtil.getGraphServiceClient();
 
         // Prepare default licence if auto licensing is enabled
         List<AssignedLicense> addLicensesList = new ArrayList<>();
@@ -134,6 +145,22 @@ public class AzureSyncService {
             usersCreated++;
         }
 
+    }
+
+    /**
+     * Update users in Azure AD that are pending for synchronization.
+     * @param syncId Id of this sync. Used to set the lastSyncId attribute in the User object.
+     * @throws SQLException Thrown if an error occurs while querying the database.
+     */
+    public void updateUsers(String syncId) throws SQLException {
+        //Query changed users, which are pending for synchronization
+        QueryBuilder<User, String> changedUserQueryBuilder = userDAO.getQueryBuilder();
+        changedUserQueryBuilder.where()
+                .eq("changeState", ChangeState.CHANGED.toValue())
+                .and()
+                .eq("syncState", SyncState.PENDING.toValue());
+        List<User> changedUsers = userDAO.query(changedUserQueryBuilder);
+
         for (User user : changedUsers) {
             user.setLastSyncId(syncId);
             // Patch user in Azure AD
@@ -143,6 +170,21 @@ public class AzureSyncService {
             userDAO.update(user);
             usersChanged++;
         }
+
+    }
+
+    /**
+     * Delete users from Azure AD that are pending for synchronization.
+     * @throws SQLException Thrown if an error occurs while querying the database.
+     */
+    public void deleteUsers() throws SQLException {
+        // Query deleted users, which are pending for synchronization
+        QueryBuilder<User, String> deletedUserQueryBuilder = userDAO.getQueryBuilder();
+        deletedUserQueryBuilder.where()
+                .eq("changeState", ChangeState.DELETED.toValue())
+                .and()
+                .eq("syncState", SyncState.PENDING.toValue());
+        List<User> deletedUsers = userDAO.query(deletedUserQueryBuilder);
 
         for (User user : deletedUsers) {
             // Delete user from Azure AD
@@ -155,14 +197,6 @@ public class AzureSyncService {
             userDAO.delete(user);
             usersDeleted++;
         }
-
-        LocalDateTime syncEnd = LocalDateTime.now();
-
-        H2Helper.getSyncDao().persist(
-                new Sync(syncId, syncBegin, syncEnd, usersCreated, usersChanged, usersDeleted, usersFailing));
-
-        LOG.info("Azure AD sync {} finished. Result: {} NEW, {} CHANGED, {} DELETED, {} FAILED",
-                syncId, usersCreated, usersChanged, usersDeleted, usersFailing);
 
     }
 
