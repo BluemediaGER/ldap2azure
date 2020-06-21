@@ -3,6 +3,7 @@ package de.traber_info.home.ldap2azure.h2.dao;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import de.traber_info.home.ldap2azure.model.object.User;
+import de.traber_info.home.ldap2azure.model.type.SyncState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +33,8 @@ public class UserDAOImpl {
     }
 
     /**
-     * Save an {@link User} to the local in-memory cache database.
-     * @param user {@link User} that should be saved to cache.
+     * Save an {@link User} to the database.
+     * @param user {@link User} that should be saved to database.
      */
     public void persist(User user) {
         try {
@@ -44,6 +45,10 @@ public class UserDAOImpl {
         }
     }
 
+    /**
+     * Update an {@link User} in the database.
+     * @param user {@link User} that should be updated.
+     */
     public void update(User user) {
         try {
             dao.update(user);
@@ -54,8 +59,8 @@ public class UserDAOImpl {
     }
 
     /**
-     * Delete an {@link User} from the local in-memory cache database.
-     * @param user {@link User} that should be deleted from the cache.
+     * Delete an {@link User} from the database.
+     * @param user {@link User} that should be deleted from the database.
      */
     public void delete(User user) {
         try {
@@ -66,8 +71,8 @@ public class UserDAOImpl {
     }
 
     /**
-     * Retrieve all {@link User} that are contained in the local in-memory cache.
-     * @return List of {@link User} that are currently stored in the cache.
+     * Retrieve all {@link User} that are contained in the database.
+     * @return List of {@link User} that are currently stored in the database.
      */
     public List<User> getAll() {
         List<User> list = new ArrayList<>();
@@ -80,7 +85,7 @@ public class UserDAOImpl {
     }
 
     /**
-     * Retrieve an single {@link User} from the local in-memory cache using any attribute.
+     * Retrieve an single {@link User} from the database using any attribute.
      * @return Instance of the found {@link User}, or null if no entry could be found.
      */
     public User getByAttributeMatch(String attributeName, String attributeValue) {
@@ -100,6 +105,43 @@ public class UserDAOImpl {
     }
 
     /**
+     * Get an QueryBuilder instance from the DAO.
+     * @return QueryBuilder instance from the DAO.
+     */
+    public QueryBuilder<User, String> getQueryBuilder() {
+        return dao.queryBuilder();
+    }
+
+    /**
+     * Get a list of results matching the given query.
+     * @param queryBuilder Query the found objects must match.
+     * @return List of results matching the given query.
+     */
+    public List<User> query(QueryBuilder<User, String> queryBuilder) {
+        try {
+            return dao.query(queryBuilder.prepare());
+        } catch (SQLException ex) {
+            LOG.error("An unexpected error occurred", ex);
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * Retrieve multiple {@link User} instances from the database using any attribute.
+     * @return List of the found {@link User} instances, where the given attribute matches.
+     */
+    public List<User> getAllByAttributeMatch(String attributeName, String attributeValue) {
+        QueryBuilder<User, String> queryBuilder = dao.queryBuilder();
+        try {
+            queryBuilder.where().eq(attributeName, attributeValue);
+            return dao.query(queryBuilder.prepare());
+        } catch (SQLException ex) {
+            LOG.error("An unexpected error occurred", ex);
+        }
+        return new ArrayList<>();
+    }
+
+    /**
      * Get the amount of all users currently persisted in the database.
      * @return Amount of all users currently persisted in the database.
      */
@@ -113,13 +155,28 @@ public class UserDAOImpl {
     }
 
     /**
-     * Get the amount of all users that have the WARN sync state.
-     * @return Amount of all users that have the WARN sync state.
+     * Get the amount of all users that have the OK sync state.
+     * @return Amount of all users that have the OK sync state.
      */
-    public long getWarnAmount() {
+    public long getOkAmount() {
         QueryBuilder<User, String> queryBuilder = dao.queryBuilder();
         try {
-            queryBuilder.setCountOf(true).where().eq("syncStatus", "WARN");
+            queryBuilder.setCountOf(true).where().eq("syncStatus", SyncState.OK.toValue());
+            return dao.countOf(queryBuilder.prepare());
+        } catch (SQLException ex) {
+            LOG.error("An unexpected error occurred", ex);
+        }
+        return 0;
+    }
+
+    /**
+     * Get the amount of all users that have the PENDING sync state.
+     * @return Amount of all users that have the PENDING sync state.
+     */
+    public long getPendingAmount() {
+        QueryBuilder<User, String> queryBuilder = dao.queryBuilder();
+        try {
+            queryBuilder.setCountOf(true).where().eq("syncStatus", SyncState.PENDING.toValue());
             return dao.countOf(queryBuilder.prepare());
         } catch (SQLException ex) {
             LOG.error("An unexpected error occurred", ex);
@@ -134,7 +191,7 @@ public class UserDAOImpl {
     public long getFailedAmount() {
         QueryBuilder<User, String> queryBuilder = dao.queryBuilder();
         try {
-            queryBuilder.setCountOf(true).where().eq("syncStatus", "FAILED");
+            queryBuilder.setCountOf(true).where().eq("syncStatus", SyncState.FAILED.toValue());
             return dao.countOf(queryBuilder.prepare());
         } catch (SQLException ex) {
             LOG.error("An unexpected error occurred", ex);

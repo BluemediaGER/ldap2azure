@@ -4,7 +4,9 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import de.traber_info.home.ldap2azure.h2.dao.SyncDAOImpl;
 import de.traber_info.home.ldap2azure.h2.dao.UserDAOImpl;
+import de.traber_info.home.ldap2azure.model.object.Sync;
 import de.traber_info.home.ldap2azure.model.object.User;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 import org.h2.tools.Server;
@@ -25,17 +27,14 @@ public class H2Helper {
     /** SLF4J logger for usage in this class */
     private static final Logger LOG = LoggerFactory.getLogger(H2Helper.class.getName());
 
-    /** Connection source for caching database */
-    private static ConnectionSource cacheConnectionSource;
+    /** Connection source for the database */
+    private static ConnectionSource connectionSource;
 
-    /** Connection source for persistent database */
-    private static ConnectionSource persistentConnectionSource;
+    /** {@link UserDAOImpl} used to persist {@link User} objects to the database */
+    private static UserDAOImpl userDao;
 
-    /** {@link UserDAOImpl} used to persist {@link User} objects to the cache database */
-    private static UserDAOImpl cacheUserDao;
-
-    /** {@link UserDAOImpl} used to persist {@link User} objects to the persistent database */
-    private static UserDAOImpl persistentUserDao;
+    /** {@link SyncDAOImpl} used to persist {@link Sync} objects to the database */
+    private static SyncDAOImpl syncDao;
 
     /**
      * Initialize the H2 database connections, tables and DAOs and start the debugging console if needed
@@ -43,18 +42,16 @@ public class H2Helper {
      */
     public static void init(boolean enableDebuggingConsole) {
         try {
-            cacheConnectionSource = new JdbcConnectionSource("jdbc:h2:mem:cache");
-            persistentConnectionSource = new JdbcConnectionSource("jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure");
+            connectionSource = new JdbcConnectionSource("jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure");
 
-            cacheUserDao = new UserDAOImpl(DaoManager.createDao(cacheConnectionSource, User.class));
-            TableUtils.createTableIfNotExists(cacheConnectionSource, User.class);
+            userDao = new UserDAOImpl(DaoManager.createDao(connectionSource, User.class));
+            TableUtils.createTableIfNotExists(connectionSource, User.class);
 
-            persistentUserDao = new UserDAOImpl(DaoManager.createDao(persistentConnectionSource, User.class));
-            TableUtils.createTableIfNotExists(persistentConnectionSource, User.class);
+            syncDao = new SyncDAOImpl(DaoManager.createDao(connectionSource, Sync.class));
+            TableUtils.createTableIfNotExists(connectionSource, Sync.class);
 
             if (enableDebuggingConsole) {
                 LOG.warn("Debugging mode is active. This will open an unsecured H2 Console on port 8082 of your host machine and is not recommended in an production environment.");
-                LOG.info("DEBUG - MemCacheDB - jdbc:h2:mem:cache");
                 LOG.info("DEBUG - FileDB - {}", "jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure");
                 Server.createWebServer("-web", "-webAllowOthers", "-webPort" , "8082").start();
             }
@@ -66,11 +63,8 @@ public class H2Helper {
     /** Close the H2 database connections */
     public static void close() {
         try {
-            if (cacheConnectionSource != null) {
-                cacheConnectionSource.close();
-            }
-            if (persistentConnectionSource != null) {
-                persistentConnectionSource.close();
+            if (connectionSource != null) {
+                connectionSource.close();
             }
         } catch (IOException ex) {
             LOG.error("An unexpected error occurred", ex);
@@ -78,19 +72,18 @@ public class H2Helper {
     }
 
     /**
-     * Get the {@link UserDAOImpl} used to persist {@link User} objects to the cache database.
-     * @return {@link UserDAOImpl} used to persist {@link User} objects to the cache database.
+     * Get the {@link UserDAOImpl} used to persist {@link User} objects to the database.
+     * @return {@link UserDAOImpl} used to persist {@link User} objects to the database.
      */
-    public static UserDAOImpl getCacheUserDao() {
-        return cacheUserDao;
+    public static UserDAOImpl getUserDao() {
+        return userDao;
     }
 
     /**
-     * Get the {@link UserDAOImpl} used to persist {@link User} objects to the persistent database.
-     * @return {@link UserDAOImpl} used to persist {@link User} objects to the persistent database.
+     * Get the {@link SyncDAOImpl} used to persist {@link Sync} objects to the database.
+     * @return {@link SyncDAOImpl} used to persist {@link Sync} objects to the database.
      */
-    public static UserDAOImpl getPersistentUserDao() {
-        return persistentUserDao;
+    public static SyncDAOImpl getSyncDao() {
+        return syncDao;
     }
-
 }

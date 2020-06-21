@@ -1,6 +1,7 @@
 package de.traber_info.home.ldap2azure.model.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.traber_info.home.ldap2azure.model.type.DeleteBehavior;
 
 /**
  * Model for all configuration variables used by the Microsoft Graph SDK for communication with the Microsoft Graph API
@@ -24,6 +25,10 @@ public class GraphClientConfig {
     /** Usage location for new users. Necessary for some Office apps */
     @JsonProperty("usageLocation")
     private String usageLocation;
+
+    /** Behavior how users are deleted from Azure AD */
+    @JsonProperty("deleteBehavior")
+    private DeleteBehavior deleteBehavior;
 
     /**
      * Get the tenant specific authorisation authority from the config file
@@ -57,4 +62,11 @@ public class GraphClientConfig {
         return usageLocation;
     }
 
+    /**
+     * Get the behavior how users are deleted from Azure AD
+     * @return Behavior how users are deleted from Azure AD
+     */
+    public DeleteBehavior getDeleteBehavior() {
+        return deleteBehavior;
+    }
 }

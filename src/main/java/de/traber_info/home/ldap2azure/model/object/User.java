@@ -80,7 +80,7 @@ public class User {
     private String lastSyncId;
 
     /**
-     * Default constructor for Jackson JSON deserialization.
+     * Default constructor for deserialization.
      */
     private User() {}
 
@@ -326,7 +326,7 @@ public class User {
      */
     public com.microsoft.graph.models.extensions.User toAzureUser() {
         com.microsoft.graph.models.extensions.User user = new com.microsoft.graph.models.extensions.User();
-        user.id = this.id;
+        user.id = this.azureImmutableId;
         user.onPremisesImmutableId = this.onPremisesImmutableId;
         user.givenName = this.givenName;
         user.surname = this.surname;

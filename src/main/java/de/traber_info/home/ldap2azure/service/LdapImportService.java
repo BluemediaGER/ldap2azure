@@ -6,6 +6,7 @@ import de.traber_info.home.ldap2azure.model.config.LdapConfig;
 import de.traber_info.home.ldap2azure.model.config.PatternConfig;
 import de.traber_info.home.ldap2azure.model.object.User;
 import de.traber_info.home.ldap2azure.model.type.ChangeState;
+import de.traber_info.home.ldap2azure.model.type.SyncState;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,7 +130,7 @@ public class LdapImportService {
             String onPremisesImmutableId = entry.getKey();
             User user = entry.getValue();
 
-            User dbUser = H2Helper.getPersistentUserDao()
+            User dbUser = H2Helper.getUserDao()
                     .getByAttributeMatch("onPremisesImmutableId", onPremisesImmutableId);
             if (dbUser != null) {
                 if (!dbUser.isHashEqual(user)) {
@@ -137,23 +138,26 @@ public class LdapImportService {
                     user.setAzureImmutableId(dbUser.getAzureImmutableId());
                     user.setLastSyncId(dbUser.getLastSyncId());
                     user.setChangeState(ChangeState.CHANGED);
-                    H2Helper.getPersistentUserDao().update(user);
+                    user.setSyncState(SyncState.PENDING);
+                    H2Helper.getUserDao().update(user);
                     changedUsers++;
                 } else {
                     unchangedUsers++;
                 }
             } else {
                 user.setChangeState(ChangeState.NEW);
-                H2Helper.getPersistentUserDao().persist(user);
+                user.setSyncState(SyncState.PENDING);
+                H2Helper.getUserDao().persist(user);
                 newUsers++;
             }
         }
 
         // Check for deleted users.
-        for (User user : H2Helper.getPersistentUserDao().getAll()) {
+        for (User user : H2Helper.getUserDao().getAll()) {
             if (!users.containsKey(user.getOnPremisesImmutableId())) {
                 user.setChangeState(ChangeState.DELETED);
-                H2Helper.getPersistentUserDao().update(user);
+                user.setSyncState(SyncState.PENDING);
+                H2Helper.getUserDao().update(user);
                 deletedUsers++;
             }
         }

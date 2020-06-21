@@ -30,7 +30,7 @@ public class ChangeStatePersister extends StringType {
      */
     @Override
     public Object javaToSqlArg(FieldType fieldType, Object javaObject) {
-        return ((ChangeState) javaObject).toValue();
+        return javaObject.toString().toLowerCase();
     }
 
     /**

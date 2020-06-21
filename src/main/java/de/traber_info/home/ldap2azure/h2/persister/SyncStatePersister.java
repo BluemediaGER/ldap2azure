@@ -30,7 +30,7 @@ public class SyncStatePersister extends StringType {
      */
     @Override
     public Object javaToSqlArg(FieldType fieldType, Object javaObject) {
-        return javaObject;
+        return javaObject.toString().toLowerCase();
     }
 
     /**
