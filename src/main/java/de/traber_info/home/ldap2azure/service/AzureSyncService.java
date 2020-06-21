@@ -161,7 +161,7 @@ public class AzureSyncService {
         H2Helper.getSyncDao().persist(
                 new Sync(syncId, syncBegin, syncEnd, usersCreated, usersChanged, usersDeleted, usersFailing));
 
-        LOG.info("Azure AD sync {} finished. Result: {} NEW, {} CHANGED, {} DELETED, {} UNCHANGED",
+        LOG.info("Azure AD sync {} finished. Result: {} NEW, {} CHANGED, {} DELETED, {} FAILED",
                 syncId, usersCreated, usersChanged, usersDeleted, usersFailing);
 
     }
