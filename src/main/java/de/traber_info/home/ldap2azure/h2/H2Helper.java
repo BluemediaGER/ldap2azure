@@ -4,10 +4,12 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import de.traber_info.home.ldap2azure.h2.dao.ApiSessionDAOImpl;
 import de.traber_info.home.ldap2azure.h2.dao.SyncDAOImpl;
 import de.traber_info.home.ldap2azure.h2.dao.UserDAOImpl;
 import de.traber_info.home.ldap2azure.model.object.Sync;
 import de.traber_info.home.ldap2azure.model.object.User;
+import de.traber_info.home.ldap2azure.rest.model.object.ApiSession;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 import org.h2.tools.Server;
 import org.slf4j.Logger;
@@ -27,8 +29,11 @@ public class H2Helper {
     /** SLF4J logger for usage in this class */
     private static final Logger LOG = LoggerFactory.getLogger(H2Helper.class.getName());
 
-    /** Connection source for the database */
-    private static ConnectionSource connectionSource;
+    /** Connection source for the persistent database */
+    private static ConnectionSource persistentConnectionSource;
+
+    /** Connection source for the in memory database */
+    private static ConnectionSource inMemoryConnectionSource;
 
     /** {@link UserDAOImpl} used to persist {@link User} objects to the database */
     private static UserDAOImpl userDao;
@@ -36,23 +41,31 @@ public class H2Helper {
     /** {@link SyncDAOImpl} used to persist {@link Sync} objects to the database */
     private static SyncDAOImpl syncDao;
 
+    /** {@link ApiSessionDAOImpl} used to persist {@link ApiSession} objects to the database */
+    private static ApiSessionDAOImpl apiSessionDao;
+
     /**
      * Initialize the H2 database connections, tables and DAOs and start the debugging console if needed
      * @param enableDebuggingConsole Set true to enable H2's web based console on TCP port 8082
      */
     public static void init(boolean enableDebuggingConsole) {
         try {
-            connectionSource = new JdbcConnectionSource("jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure");
+            persistentConnectionSource = new JdbcConnectionSource("jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure");
+            inMemoryConnectionSource = new JdbcConnectionSource("jdbc:h2:mem:cache");
 
-            userDao = new UserDAOImpl(DaoManager.createDao(connectionSource, User.class));
-            TableUtils.createTableIfNotExists(connectionSource, User.class);
+            userDao = new UserDAOImpl(DaoManager.createDao(persistentConnectionSource, User.class));
+            TableUtils.createTableIfNotExists(persistentConnectionSource, User.class);
 
-            syncDao = new SyncDAOImpl(DaoManager.createDao(connectionSource, Sync.class));
-            TableUtils.createTableIfNotExists(connectionSource, Sync.class);
+            syncDao = new SyncDAOImpl(DaoManager.createDao(persistentConnectionSource, Sync.class));
+            TableUtils.createTableIfNotExists(persistentConnectionSource, Sync.class);
+
+            apiSessionDao = new ApiSessionDAOImpl(DaoManager.createDao(inMemoryConnectionSource, ApiSession.class));
+            TableUtils.createTableIfNotExists(inMemoryConnectionSource, ApiSession.class);
 
             if (enableDebuggingConsole) {
                 LOG.warn("Debugging mode is active. This will open an unsecured H2 Console on port 8082 of your host machine and is not recommended in an production environment.");
-                LOG.info("DEBUG - FileDB - {}", "jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure");
+                LOG.info("DEBUG - FileDB - jdbc:h2:{}", ConfigUtil.getJarPath() + "/ldap2azure");
+                LOG.info("DEBUG - RamDB - jdbc:h2:mem:cache");
                 Server.createWebServer("-web", "-webAllowOthers", "-webPort" , "8082").start();
             }
         } catch (SQLException | URISyntaxException ex) {
@@ -63,8 +76,11 @@ public class H2Helper {
     /** Close the H2 database connections */
     public static void close() {
         try {
-            if (connectionSource != null) {
-                connectionSource.close();
+            if (persistentConnectionSource != null) {
+                persistentConnectionSource.close();
+            }
+            if (inMemoryConnectionSource != null) {
+                inMemoryConnectionSource.close();
             }
         } catch (IOException ex) {
             LOG.error("An unexpected error occurred", ex);
@@ -86,4 +102,13 @@ public class H2Helper {
     public static SyncDAOImpl getSyncDao() {
         return syncDao;
     }
+
+    /**
+     * Get the {@link ApiSessionDAOImpl} used to persist {@link ApiSession} objects to the database.
+     * @return {@link ApiSessionDAOImpl} used to persist {@link ApiSession} objects to the database.
+     */
+    public static ApiSessionDAOImpl getApiSessionDao() {
+        return apiSessionDao;
+    }
+
 }
