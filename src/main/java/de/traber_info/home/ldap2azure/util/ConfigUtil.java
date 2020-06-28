@@ -20,7 +20,7 @@ public class ConfigUtil {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigUtil.class.getName());
 
     /** Global instance of the loaded and deserialized config */
-    public static Config config;
+    private static Config config;
 
     /**
      * Get the current loaded config or load the config if it isn't loaded already.

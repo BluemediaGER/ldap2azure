@@ -140,6 +140,7 @@ public class AzureSyncService {
 
             user.setAzureImmutableId(id);
             user.setSyncState(SyncState.OK);
+            user.setChangeState(ChangeState.UNCHANGED);
             userDAO.update(user);
             LOG.trace("User {} created successfully", user.getDisplayName());
             usersCreated++;
@@ -166,6 +167,7 @@ public class AzureSyncService {
             // Patch user in Azure AD
             msGraphServiceClient.users(user.getAzureImmutableId()).buildRequest().patch(user.toAzureUser());
             user.setSyncState(SyncState.OK);
+            user.setChangeState(ChangeState.UNCHANGED);
             // Update user in local database
             userDAO.update(user);
             usersChanged++;

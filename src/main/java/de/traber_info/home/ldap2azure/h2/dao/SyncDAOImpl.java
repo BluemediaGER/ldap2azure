@@ -10,6 +10,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Class used to retrieve, create and update {@link Sync} objects in the database.
+ *
+ * @author Oliver Traber
+ */
 public class SyncDAOImpl {
 
     /** SLF4J logger for usage in this class */
@@ -96,6 +101,22 @@ public class SyncDAOImpl {
             LOG.error("An unexpected error occurred", ex);
         }
         return null;
+    }
+
+    /**
+     * Get the newest syncs in the database. Limit the number of returned objects.
+     * @param amount Maximal amount of {@link Sync} objects to return.
+     * @return {@link List} congaing the newest {@link Sync} objects from the database.
+     */
+    public List<Sync> getRecent(long amount) {
+        QueryBuilder<Sync, String> queryBuilder = dao.queryBuilder();
+        try {
+            queryBuilder.orderBy("startTime", false).limit(amount);
+            return dao.query(queryBuilder.prepare());
+        } catch (SQLException ex) {
+            LOG.error("An unexpected error occurred", ex);
+        }
+        return new ArrayList<>();
     }
 
     /**
