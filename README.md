@@ -8,7 +8,7 @@ ldap2azure ensures that all changes to LDAP objects are automatically synchroniz
 
 ## What ldap2azure can and cannot do
 
-ldap2azure can create simple user objects for the use with a SAML 2.0 idetity provider such as [Keycloak](https://www.keycloak.org/).  
+ldap2azure can create simple user objects for the use with a SAML 2.0 identity provider such as [Keycloak](https://www.keycloak.org/).  
 ldaps2azure is **not** designed to synchronize complete directory structures including groups, group memberships and resources, or users including their password hashes. A synchronization into the other direction, i.e. from Azure into an LDAP, is also not intended.  
 If your environment requires such functionality, or you use Microsoft Active Directory, take a look at [Azure AD Connect](https://www.codetwo.com/admins-blog/how-to-sync-on-premises-active-directory-to-azure-active-directory-with-azure-ad-connect/) instead.
 
