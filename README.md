@@ -100,7 +100,7 @@ More about creating a Microsoft Graph application can be found [here](https://do
 | msGraphClientId | ID of the Microsoft Graph Application that should be used | 641e2b36-0bde-46af-b896-545532c0ba03 |
 | msGraphClientSecret | Secret, which was generated for the application in Azure AD | Vo:MfG.AHK[eIwO?QhpdQ5mz0p8cG3L- |
 | usageLocation | Two character location code of the country new user accounts will be used in | DE |
-| deleteBehavior | If set to HARD users will be deleted completely. If set to SOFT they will be moved to the recycling bin and are deleted by Azure AD after 30 days | HARD |
+| deleteBehavior | If set to HARD, users will be deleted completely if they are removed from the source ldap. If set to SOFT they will be moved to the recycling bin instead and will be deleted by Azure AD after 30 days | HARD |
 
 ### The "ldap" section
 The "ldap" section contains all information on how and which data is retrieved from the source LDAP.  
