@@ -22,7 +22,7 @@ public class RandomString {
     public static final String digits = "0123456789";
 
     /** Special characters used in the string */
-    public static final String special = "!ยง$%&/()=?,.-_;#+*";
+    public static final String special = "!$%&/()=?.-_#+*";
 
     /** All possible charachters used in the string */
     public static final String alphanum = upper + lower + digits + special;
