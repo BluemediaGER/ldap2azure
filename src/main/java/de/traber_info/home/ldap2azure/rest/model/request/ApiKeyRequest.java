@@ -19,7 +19,7 @@ public class ApiKeyRequest {
     private String keyName;
 
     /** Private default constructor for Jackson deserialization */
-    private ApiKeyRequest() {}
+    public ApiKeyRequest() {}
 
     /**
      * Get the name for the new {@link de.traber_info.home.ldap2azure.rest.model.object.ApiKey}.

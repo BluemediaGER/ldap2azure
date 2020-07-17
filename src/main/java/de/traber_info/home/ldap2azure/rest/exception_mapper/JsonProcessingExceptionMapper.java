@@ -2,7 +2,6 @@ package de.traber_info.home.ldap2azure.rest.exception_mapper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import javax.validation.ConstraintViolationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
