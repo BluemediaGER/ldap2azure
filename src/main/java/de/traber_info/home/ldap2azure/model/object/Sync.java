@@ -1,5 +1,7 @@
 package de.traber_info.home.ldap2azure.model.object;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import de.traber_info.home.ldap2azure.h2.persister.LocalDateTimePersister;
@@ -20,10 +22,12 @@ public class Sync {
 
     /** Time the sync began */
     @DatabaseField(persisterClass = LocalDateTimePersister.class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime syncBegin;
 
     /** Time the sync completed */
     @DatabaseField(persisterClass = LocalDateTimePersister.class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime syncEnd;
 
     /** Amount of users created in this sync */
@@ -72,6 +76,7 @@ public class Sync {
      * Get the internal id of the sync.
      * @return Internal id of the sync.
      */
+    @JsonProperty("_id")
     public String getId() {
         return id;
     }
@@ -80,6 +85,8 @@ public class Sync {
      * Get the time the sync began.
      * @return Time the sync began.
      */
+    @JsonProperty("syncBegin")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSS")
     public LocalDateTime getSyncBegin() {
         return syncBegin;
     }
@@ -88,6 +95,8 @@ public class Sync {
      * Get the time the sync completed.
      * @return Time the sync completed.
      */
+    @JsonProperty("syncEnd")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSS")
     public LocalDateTime getSyncEnd() {
         return syncEnd;
     }
@@ -96,6 +105,7 @@ public class Sync {
      * Get the amount of users created by this sync.
      * @return Amount of users created by this sync.
      */
+    @JsonProperty("usersCreated")
     public long getUsersCreated() {
         return usersCreated;
     }
@@ -104,6 +114,7 @@ public class Sync {
      * Get the amount of users changed by this sync.
      * @return Amount of users changed by this sync.
      */
+    @JsonProperty("usersChanged")
     public long getUsersChanged() {
         return usersChanged;
     }
@@ -112,6 +123,7 @@ public class Sync {
      * Get the amount of users deleted by this sync.
      * @return Amount of users deleted by this sync.
      */
+    @JsonProperty("usersDeleted")
     public long getUsersDeleted() {
         return usersDeleted;
     }
@@ -120,6 +132,7 @@ public class Sync {
      * Get the of users that failed to sync.
      * @return Amount of users that failed to sync.
      */
+    @JsonProperty("usersFailing")
     public long getUsersFailing() {
         return usersFailing;
     }
