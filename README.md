@@ -8,7 +8,7 @@ ldap2azure ensures that all changes to LDAP objects are automatically synchroniz
 
 ## What ldap2azure can and cannot do
 
-ldap2azure can create simple user objects for the use of a SingleSignOn service such as Keycloak.  
+ldap2azure can create simple user objects for the use with a SAML 2.0 identity provider such as [Keycloak](https://www.keycloak.org/).  
 ldaps2azure is **not** designed to synchronize complete directory structures including groups, group memberships and resources, or users including their password hashes. A synchronization into the other direction, i.e. from Azure into an LDAP, is also not intended.  
 If your environment requires such functionality, or you use Microsoft Active Directory, take a look at [Azure AD Connect](https://www.codetwo.com/admins-blog/how-to-sync-on-premises-active-directory-to-azure-active-directory-with-azure-ad-connect/) instead.
 
@@ -100,7 +100,7 @@ More about creating a Microsoft Graph application can be found [here](https://do
 | msGraphClientId | ID of the Microsoft Graph Application that should be used | 641e2b36-0bde-46af-b896-545532c0ba03 |
 | msGraphClientSecret | Secret, which was generated for the application in Azure AD | Vo:MfG.AHK[eIwO?QhpdQ5mz0p8cG3L- |
 | usageLocation | Two character location code of the country new user accounts will be used in | DE |
-| deleteBehavior | If set to HARD users will be deleted completely. If set to SOFT they will be moved to the recycling bin and are deleted by Azure AD after 30 days | HARD |
+| deleteBehavior | If set to HARD, users will be deleted completely if they are removed from the source ldap. If set to SOFT they will be moved to the recycling bin instead and will be deleted by Azure AD after 30 days | HARD |
 
 ### The "ldap" section
 The "ldap" section contains all information on how and which data is retrieved from the source LDAP.  
