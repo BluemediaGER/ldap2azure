@@ -13,7 +13,7 @@ import de.traber_info.home.ldap2azure.model.type.ChangeState;
 import de.traber_info.home.ldap2azure.model.type.DeleteBehavior;
 import de.traber_info.home.ldap2azure.model.type.SyncState;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
-import de.traber_info.home.ldap2azure.util.GraphClientUtil;
+import de.traber_info.home.ldap2azure.msgraph.GraphClientUtil;
 import de.traber_info.home.ldap2azure.util.RandomString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

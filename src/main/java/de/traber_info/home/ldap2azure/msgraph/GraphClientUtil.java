@@ -1,4 +1,4 @@
-package de.traber_info.home.ldap2azure.util;
+package de.traber_info.home.ldap2azure.msgraph;
 
 import com.microsoft.aad.msal4j.ClientCredentialFactory;
 import com.microsoft.aad.msal4j.ClientCredentialParameters;
@@ -66,10 +66,8 @@ public class GraphClientUtil implements IAuthenticationProvider {
         GraphClientUtil.tenantSpecificAuthority = tenantSpecificAuthority;
         GraphClientUtil.clientId = clientId;
         GraphClientUtil.clientSecret = clientSecret;
-        IClientConfig clientConfig = DefaultClientConfig.createWithAuthenticationProvider(
-                new GraphClientUtil()
-        );
-        clientConfig.getLogger().setLoggingLevel(LoggerLevel.ERROR);
+
+        CustomClientConfig clientConfig = new CustomClientConfig(new GraphClientUtil());
         mGraphServiceClient = GraphServiceClient.fromConfig(clientConfig);
     }
 
@@ -87,7 +85,7 @@ public class GraphClientUtil implements IAuthenticationProvider {
 
         LOG.trace("Lifetime of cached token exceeded. Requesting a new token...");
 
-        ConfidentialClientApplication app = null;
+        ConfidentialClientApplication app;
         try {
             app = ConfidentialClientApplication.builder(
                     clientId,
@@ -96,6 +94,7 @@ public class GraphClientUtil implements IAuthenticationProvider {
                     .build();
         } catch (MalformedURLException ex) {
             LOG.error("An unexpected error occurred", ex);
+            return null;
         }
 
         // With client credentials flows the scope is ALWAYS of the shape "resource/.default", as the

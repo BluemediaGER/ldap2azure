@@ -8,7 +8,7 @@ import de.traber_info.home.ldap2azure.rest.RestApplication;
 import de.traber_info.home.ldap2azure.service.AzureSyncService;
 import de.traber_info.home.ldap2azure.service.LdapImportService;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
-import de.traber_info.home.ldap2azure.util.GraphClientUtil;
+import de.traber_info.home.ldap2azure.msgraph.GraphClientUtil;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
