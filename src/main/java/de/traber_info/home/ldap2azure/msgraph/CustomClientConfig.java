@@ -1,11 +1,13 @@
 package de.traber_info.home.ldap2azure.msgraph;
 
 import com.microsoft.graph.authentication.IAuthenticationProvider;
+import com.microsoft.graph.concurrency.DefaultExecutors;
 import com.microsoft.graph.concurrency.IExecutors;
-import com.microsoft.graph.core.DefaultClientConfig;
 import com.microsoft.graph.core.IClientConfig;
+import com.microsoft.graph.http.DefaultHttpProvider;
 import com.microsoft.graph.http.IHttpProvider;
 import com.microsoft.graph.logger.ILogger;
+import com.microsoft.graph.serializer.DefaultSerializer;
 import com.microsoft.graph.serializer.ISerializer;
 
 /**
@@ -31,14 +33,11 @@ public class CustomClientConfig implements IClientConfig {
      * @param authenticationProvider {@link IAuthenticationProvider} that should be used.
      */
     public CustomClientConfig(IAuthenticationProvider authenticationProvider) {
-        IClientConfig defaultConfig = DefaultClientConfig.createWithAuthenticationProvider(
-                authenticationProvider
-        );
-        this.authenticationProvider = defaultConfig.getAuthenticationProvider();
-        this.executors = defaultConfig.getExecutors();
-        this.httpProvider = defaultConfig.getHttpProvider();
-        this.serializer = defaultConfig.getSerializer();
         this.logger = new CustomGraphLogger();
+        this.authenticationProvider = authenticationProvider;
+        this.executors = new DefaultExecutors(logger);
+        this.serializer = new DefaultSerializer(logger);
+        this.httpProvider = new DefaultHttpProvider(serializer, authenticationProvider, executors, logger);
     }
 
     /**
