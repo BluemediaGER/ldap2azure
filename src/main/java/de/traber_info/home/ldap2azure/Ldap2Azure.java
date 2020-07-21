@@ -3,6 +3,7 @@ package de.traber_info.home.ldap2azure;
 import de.traber_info.home.ldap2azure.h2.H2Helper;
 import de.traber_info.home.ldap2azure.model.config.GraphClientConfig;
 import de.traber_info.home.ldap2azure.msgraph.GraphClientUtil;
+import de.traber_info.home.ldap2azure.quartz.CleanupJob;
 import de.traber_info.home.ldap2azure.quartz.SyncJob;
 import de.traber_info.home.ldap2azure.rest.server.HttpServer;
 import de.traber_info.home.ldap2azure.service.AzureSyncService;
@@ -78,20 +79,33 @@ public class Ldap2Azure {
 
             // Prepare sync job
             JobDetail syncJob = JobBuilder.newJob(SyncJob.class)
-                    .withIdentity("syncJob1")
+                    .withIdentity("syncJob")
                     .build();
 
             // Prepare cron trigger with cron expression from config
-            Trigger trigger = TriggerBuilder.newTrigger()
-                    .withIdentity("syncTrigger1")
+            Trigger syncTrigger = TriggerBuilder.newTrigger()
+                    .withIdentity("syncTrigger")
                     .startNow()
                     .withSchedule(
                             CronScheduleBuilder.cronSchedule(
                                     ConfigUtil.getConfig().getGeneralConfig().getCronExpression()))
                     .build();
 
-            // Schedule job and start scheduler
-            quartzScheduler.scheduleJob(syncJob, trigger);
+            // Prepare cleanup job
+            JobDetail cleanupJob = JobBuilder.newJob(CleanupJob.class)
+                    .withIdentity("cleanupJob")
+                    .build();
+
+            // Prepare trigger that triggers every 10 minutes forever
+            Trigger cleanupTrigger = TriggerBuilder.newTrigger()
+                    .withIdentity("cleanupTrigger")
+                    .startNow()
+                    .withSchedule(SimpleScheduleBuilder.repeatMinutelyForever(10))
+                    .build();
+
+            // Schedule jobs and start scheduler
+            quartzScheduler.scheduleJob(syncJob, syncTrigger);
+            quartzScheduler.scheduleJob(cleanupJob, cleanupTrigger);
             quartzScheduler.start();
             LOG.info("Scheduled sync interval with cron expression {}",
                     ConfigUtil.getConfig().getGeneralConfig().getCronExpression());

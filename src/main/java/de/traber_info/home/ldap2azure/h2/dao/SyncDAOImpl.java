@@ -1,12 +1,16 @@
 package de.traber_info.home.ldap2azure.h2.dao;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import de.traber_info.home.ldap2azure.model.object.Sync;
+import de.traber_info.home.ldap2azure.rest.model.object.ApiSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +47,16 @@ public class SyncDAOImpl extends GenericDAOImpl<Sync> {
             LOG.error("An unexpected error occurred", ex);
         }
         return new ArrayList<>();
+    }
+
+    /**
+     * Cleanup {@link Sync} objects from the database if they are older than 7 days.
+     * @throws SQLException Exception if an error occurred.
+     */
+    public void cleanup() throws SQLException {
+        DeleteBuilder<Sync, String> deleteBuilder = dao.deleteBuilder();
+        deleteBuilder.where().lt("syncEnd", LocalDateTime.now().minusDays(7));
+        deleteBuilder.delete();
     }
 
 }

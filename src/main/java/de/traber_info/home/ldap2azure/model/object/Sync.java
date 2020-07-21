@@ -44,7 +44,7 @@ public class Sync {
 
     /** Amount of users that failed to sync */
     @DatabaseField
-    private long usersFailing;
+    private long usersFailed;
 
     /**
      * Default constructor for deserialization.
@@ -59,17 +59,17 @@ public class Sync {
      * @param usersCreated Amount of users created in this sync
      * @param usersChanged Amount of users changed in this sync
      * @param usersDeleted Amount of users deleted in this sync
-     * @param usersFailing Amount of users that failed to sync
+     * @param usersFailed Amount of users that failed to sync
      */
     public Sync(String id, LocalDateTime syncBegin, LocalDateTime syncEnd, long usersCreated,
-                long usersChanged, long usersDeleted, long usersFailing) {
+                long usersChanged, long usersDeleted, long usersFailed) {
         this.id = id;
         this.syncBegin = syncBegin;
         this.syncEnd = syncEnd;
         this.usersCreated = usersCreated;
         this.usersChanged = usersChanged;
         this.usersDeleted = usersDeleted;
-        this.usersFailing = usersFailing;
+        this.usersFailed = usersFailed;
     }
 
     /**
@@ -132,8 +132,8 @@ public class Sync {
      * Get the of users that failed to sync.
      * @return Amount of users that failed to sync.
      */
-    @JsonProperty("usersFailing")
-    public long getUsersFailing() {
-        return usersFailing;
+    @JsonProperty("usersFailed")
+    public long getUsersFailed() {
+        return usersFailed;
     }
 }
