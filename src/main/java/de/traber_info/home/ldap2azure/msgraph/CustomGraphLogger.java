@@ -21,7 +21,7 @@ public class CustomGraphLogger implements ILogger {
      */
     @Override
     public void setLoggingLevel(LoggerLevel loggerLevel) {
-
+        // Do nothing since the log level is handled by Logback.
     }
 
     /**

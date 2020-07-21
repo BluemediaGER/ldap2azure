@@ -8,7 +8,6 @@ import de.traber_info.home.ldap2azure.rest.server.HttpServer;
 import de.traber_info.home.ldap2azure.service.AzureSyncService;
 import de.traber_info.home.ldap2azure.service.LdapImportService;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
-import org.eclipse.jetty.server.Server;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;

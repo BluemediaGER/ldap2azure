@@ -12,11 +12,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Utility class to handle all actions around the embedded Jetty server.
+ *
+ * @author Oliver Traber
+ */
 public class HttpServer {
 
     /** SLF4J logger for usage in this class */
@@ -25,6 +29,10 @@ public class HttpServer {
     /** Embedded Jetty application server */
     private static Server jetty;
 
+    /**
+     * Start the internal Jetty server. This also checks if an folder named "web-frontend" exists in the jarpath.
+     * If that's the case, Jetty will serve the content within this folder under the root domain.
+     */
     public static void start() {
         // Initialize rest api and web-based management interface if enabled in the config file
         WebConfig config = ConfigUtil.getConfig().getWebConfig();
@@ -68,6 +76,9 @@ public class HttpServer {
         }
     }
 
+    /**
+     * Cleanly shutdown the embedded Jetty.
+     */
     public static void stop() {
         try {
             jetty.stop();

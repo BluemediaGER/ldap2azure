@@ -10,7 +10,6 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.concurrent.ExecutionException;
 
 /**
  * {@link ExceptionMapper} implementation used to map any {@link Exception} to a response.
