@@ -137,7 +137,9 @@ public class LdapImportService {
                     user.setId(dbUser.getId());
                     user.setAzureImmutableId(dbUser.getAzureImmutableId());
                     user.setLastSyncId(dbUser.getLastSyncId());
-                    user.setChangeState(ChangeState.CHANGED);
+                    if (dbUser.getChangeState() != ChangeState.NEW) {
+                        user.setChangeState(ChangeState.CHANGED);
+                    }
                     user.setSyncState(SyncState.PENDING);
                     H2Helper.getUserDao().update(user);
                     changedUsers++;
