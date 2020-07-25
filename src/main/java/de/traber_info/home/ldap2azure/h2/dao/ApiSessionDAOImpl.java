@@ -6,7 +6,6 @@ import de.traber_info.home.ldap2azure.rest.model.object.ApiSession;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 /**
  * Class used to retrieve, create and update {@link ApiSession} objects in the database.

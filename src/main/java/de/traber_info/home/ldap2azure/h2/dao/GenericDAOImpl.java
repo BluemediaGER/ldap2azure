@@ -101,6 +101,26 @@ public class GenericDAOImpl<T> {
     }
 
     /**
+     * Retrieve all matching objects from the local database using any attribute.
+     * @return Instance of the found, or null if no entry could be found.
+     */
+    public List<T> getAllByAttributeMatch(String attributeName, String attributeValue) {
+        QueryBuilder<T, String> queryBuilder = dao.queryBuilder();
+        try {
+            queryBuilder.where().eq(attributeName, attributeValue);
+            List<T> results = dao.query(queryBuilder.prepare());
+            if (results.size() == 0) {
+                return null;
+            } else {
+                return results;
+            }
+        } catch (SQLException ex) {
+            LOG.error("An unexpected error occurred", ex);
+        }
+        return null;
+    }
+
+    /**
      * Get an QueryBuilder instance from the DAO.
      * @return QueryBuilder instance from the DAO.
      */
