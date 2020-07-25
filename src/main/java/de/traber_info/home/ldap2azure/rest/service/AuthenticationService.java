@@ -84,14 +84,6 @@ public class AuthenticationService {
     }
 
     /**
-     * Get a list of all {@link ApiKey} currently saved in the database.
-     * @return List of {@link ApiKey} currently saved in the database.
-     */
-    public static List<ApiKey> getApiKeys() {
-        return H2Helper.getApiKeyDao().getAll();
-    }
-
-    /**
      * Get the authentication key from the {@link ApiKey} using the given id.
      * @param keyId Id of the {@link ApiKey} the authentication key should be got from.
      * @return Authentication key corresponding to the given {@link ApiKey}.

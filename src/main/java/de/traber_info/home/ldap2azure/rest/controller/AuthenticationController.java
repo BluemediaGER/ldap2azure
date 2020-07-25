@@ -1,7 +1,9 @@
 package de.traber_info.home.ldap2azure.rest.controller;
 
 import de.traber_info.home.ldap2azure.h2.H2Helper;
+import de.traber_info.home.ldap2azure.model.object.User;
 import de.traber_info.home.ldap2azure.rest.anotation.CheckAuth;
+import de.traber_info.home.ldap2azure.rest.exception.NotFoundException;
 import de.traber_info.home.ldap2azure.rest.model.object.ApiKey;
 import de.traber_info.home.ldap2azure.rest.model.request.ApiKeyRequest;
 import de.traber_info.home.ldap2azure.rest.model.response.LoginResponse;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -129,7 +132,22 @@ public class AuthenticationController {
     @Path("/api_key")
     @Produces(MediaType.APPLICATION_JSON)
     public List<ApiKey> getApiKeys() {
-        return AuthenticationService.getApiKeys();
+        return H2Helper.getApiKeyDao().getAll();
+    }
+
+    /**
+     * Get a single {@link ApiKey} by supplying it's id.
+     * @param apiKeyId Id of the {@link ApiKey} you want to get.
+     * @return The {@link ApiKey} object that matches the given id.
+     */
+    @GET
+    @CheckAuth
+    @Path("/api_key/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ApiKey getApiKey(@NotEmpty @PathParam("id") String apiKeyId) {
+        ApiKey apiKey = H2Helper.getApiKeyDao().getByAttributeMatch("id", apiKeyId);
+        if (apiKey == null) throw new NotFoundException("apikey_not_existing");
+        return apiKey;
     }
 
     /**
@@ -139,7 +157,7 @@ public class AuthenticationController {
      */
     @GET
     @CheckAuth
-    @Path("/api_key/{key_id}")
+    @Path("/api_key/{key_id}/secret")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getApiKeySecret(@NotNull @PathParam("key_id") String keyId) {
         return Response

@@ -6,6 +6,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+/**
+ * Generic Exception for cases where an human readable message should be included.
+ */
 public class GenericException extends WebApplicationException {
 
     /**
