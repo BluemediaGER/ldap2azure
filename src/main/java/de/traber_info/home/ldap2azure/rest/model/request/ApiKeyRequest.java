@@ -18,7 +18,7 @@ public class ApiKeyRequest {
     @NotEmpty(message = "field cannot be empty")
     private String keyName;
 
-    /** Private default constructor for Jackson deserialization */
+    /** Default constructor for Jackson deserialization */
     public ApiKeyRequest() {}
 
     /**

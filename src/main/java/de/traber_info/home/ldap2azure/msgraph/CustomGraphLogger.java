@@ -15,6 +15,16 @@ public class CustomGraphLogger implements ILogger {
     /** SLF4J logger for usage in this class */
     private static final Logger LOG = LoggerFactory.getLogger(CustomGraphLogger.class.getName());
 
+    private boolean logActive = true;
+
+    /**
+     * Method to temporarily deactivate logging completely.
+     * @param logActive Set to false to disable logging, set to true to enable logging.
+     */
+    public void setLogActive(boolean logActive) {
+        this.logActive = logActive;
+    }
+
     /**
      * Method to set the loggers loglevel. This method has no functionality in this implementation.
      * @param loggerLevel LoggerLevel that should be set. Has no function in this implementation.
@@ -39,7 +49,7 @@ public class CustomGraphLogger implements ILogger {
      */
     @Override
     public void logDebug(String msg) {
-        LOG.debug(msg);
+        if (logActive) LOG.debug(msg);
     }
 
     /**
@@ -49,7 +59,7 @@ public class CustomGraphLogger implements ILogger {
      */
     @Override
     public void logError(String msg, Throwable throwable) {
-        LOG.error(msg, throwable);
+        if (logActive) LOG.error(msg, throwable);
     }
 
 }

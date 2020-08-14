@@ -21,9 +21,9 @@ public class GenericException extends WebApplicationException {
      * @param error Machine readable error code.
      * @param message Error message containing further details for manual review.
      */
-    public GenericException(String error, String message) {
+    public GenericException(Response.Status httpStatus, String error, String message) {
         super(Response
-                .status(Response.Status.BAD_REQUEST)
+                .status(httpStatus)
                 .entity(new GenericError(error, message))
                 .type(MediaType.APPLICATION_JSON)
                 .build());

@@ -88,6 +88,7 @@ The "general" section contains all parameters that are not directly required for
 |:----|:-------------|:--------------|
 | syncCronExpression | Cron expression, when the SyncJob should be executed | 0 0/30 * ? * * * |
 | debuggingEnabled | If true enables an integrated H2 console on port 8082 to debug the internal database | false |
+| databaseJDBCUrl | (optional) JDBC url for the use of an external database such as MySQL. If not set the internal H2 database is used. | mysql://user:password@localhost/ldap2azure?useSSL=false
 
 ### The "msGraph" section
 The "msGraph" section contains all information required to connect to the Microsoft Graph API. The application under which ldap2azure runs must be a daemon application and have the Microsoft Graph permission 
@@ -146,8 +147,11 @@ ldap2azure offers the possibility to automatically assign a license to new users
 | featureEnabled | Can be set true to enable the function or false to disable it | true |
 | defaultLicenseSkuId | GUID of the license to be used by default. More can be read [here](https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/licensing-service-plan-reference) | 05e9a617-0261-4cee-bb44-138d3ef5d965 |
 
-### The "web" section (Work in progress)
-ldap2azure will be equipped with a RESTful API and a web interface for monitoring and management in the future. This feature is currently under heavy development.  
+### The "web" section
+ldap2azure is equipped with a RESTful API and the possibility to provide a web frontend.  
+To provide a frontend, it must be located in a folder called "web-frontend" in the same directory as the JAR file of ldap2azure and contain an index.html file. If this is the case, it is automatically mounted at application startup.
+
+The definition of the RESTful API is available at [https://bluemediager.github.io/ldap2azure](https://bluemediager.github.io/ldap2azure).
 
 | Key | Description | Example value |
 |:----|:------------| :-------------|

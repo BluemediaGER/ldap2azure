@@ -8,7 +8,6 @@ import de.traber_info.home.ldap2azure.rest.model.object.ApiSession;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Service used to manage {@link ApiSession} objects and validate the web consoles password.

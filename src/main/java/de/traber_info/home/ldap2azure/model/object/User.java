@@ -1,5 +1,6 @@
 package de.traber_info.home.ldap2azure.model.object;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -22,6 +23,7 @@ import java.util.Base64;
  * @author Oliver Traber
  */
 @DatabaseTable(tableName = "user")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
 
     /** SLF4J logger for usage in this class */

@@ -1,0 +1,872 @@
+openapi: 3.0.1
+info:
+  title: ldap2azure
+  description: 'The following describes the API of ldap2azure. The API is used by the frontend, but can also be used with API key authentication from a backend, e.g. for monitoring.'
+  license:
+    name: GPL-3.0 License
+    url: https://www.gnu.org/licenses/gpl-3.0.en.html
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+  - url: https://localhost:8080/api
+tags:
+  - name: auth
+    description: Everything about authentication
+  - name: user
+    description: Operations about users
+  - name: sync
+    description: Operations about syncs
+paths:
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Authenticate against ldap2azure using an password to gain an session cookie for further actions.
+      description: This endpoint is only intended for use in a frontend. To authorize access from another backend, please use an API key instead.
+      operationId: authLoginPassword
+      requestBody:
+        description: Login credentials to authenticate against the config file.
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        200:
+          description: >
+            Successfully authenticated.
+            The session key is returned in a cookie named `cdsess`. You need to include this cookie in subsequent requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: cdsess=abcde12345;Version=1;Domain=localhost;Path=/
+        401:
+          description: Unauthenticated. The given credentials are not valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: invalid_password
+  /auth/ack:
+    get:
+      tags:
+        - auth
+      summary: Prevent a session cookie from expiring.
+      description: This endpoint is only intended for use in a frontend. Regularly calling this endpoint prevents a session cookie from expiring after 30 minutes without action.
+      operationId: authAck
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+                example: []
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+  /auth/logout:
+    get:
+      tags:
+        - auth
+      summary: Invalidate the current session cookie.
+      description: This endpoint is only intended for use in a frontend.
+      operationId: authLogout
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+                example: []
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+  /auth/api_key:
+    post:
+      tags:
+        - auth
+      summary: Creates a new api key.
+      description: This endpoint can be used to create static api keys for use in other backends.
+      operationId: authCreateKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keyName:
+                  type: string
+                  example: ExampleKey
+      responses:
+        200:
+          description: Api key successfully created. The secret can be retrieved using another endpoint below.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+    get:
+      tags:
+        - auth
+      summary: Get a list of all api keys stored in the database.
+      operationId: authGetApiKeys
+      responses:
+        200:
+          description: Successful operation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKey'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /auth/api_key/{id}:
+    get:
+      tags:
+        - auth
+      summary: Get a single api key object from the database.
+      operationId: authGetApiKey
+      parameters:
+        - name: id
+          description: Id of the api key that should be retreived.
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+      responses:
+        200:
+          description: Request successfull. The api key with the given id is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Not found. The api key with the given id not existing in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: apikey_not_existing
+      security:
+        - cookieAuth: []
+        - api_key: []
+    delete:
+      tags:
+        - auth
+      summary: Delete an api key from the database. This invalidates the key immediately.
+      operationId: authDeleteApiKey
+      parameters:
+        - name: id
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+          description: Id of the key that should be deleted.
+      responses:
+        200:
+          description: Key sucessfully deleted.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+                example: []
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Key with the given id could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: keyid_not_existing
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /auth/api_key/{id}/secret:
+    get:
+      tags:
+        - auth
+      summary: Get the secret for the given api key from the database.
+      description: This returns the secret you have to use in the `Authorization` Header to authenticate a backend application.
+      operationId: authGetApiKeySecret
+      parameters:
+        - name: id
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+          description: Id of the key for which the secret should be fetched.
+      responses:
+        200:
+          description: Secret sucessfully retreived.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret:
+                    type: string
+                    example: qKeAeZ/YWobktAfjl?A372xilVC2.=fSjR2.H7m+3dRO*Q%/l5%_3C%$?F#cTFaA
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Key with the given id could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: keyid_not_existing
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /user:
+    get:
+      tags:
+        - user
+      summary: Retrieve the users currently stored in the database.
+      description: This endpoint retreives the users synced by ldap2azure. Since the number of users in the system can be very high, depending on the size of the environment, the end point has a multi-page structure and only returns a maximum of 20 objects at a time.
+      operationId: userGetUsers
+      parameters:
+        - name: page
+          schema:
+            type: integer
+            default: 0
+            example: 2
+          in: query
+          required: false
+      responses:
+        200:
+          description: Request successfull. The maximum ammount of 20 objects of the given page is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /user/ok:
+    get:
+      tags:
+        - user
+      summary: Retrieve the users that currently have the OK sync status.
+      description: Since the number of users in the system can be very high, depending on the size of the environment, the end point has a multi-page structure and only returns a maximum of 20 objects at a time.
+      operationId: userGetUsersOk
+      parameters:
+        - name: page
+          schema:
+            type: integer
+            default: 0
+            example: 2
+          in: query
+          required: false
+      responses:
+        200:
+          description: Request successfull. The maximum ammount of 20 objects of the given page is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /user/pending:
+    get:
+      tags:
+        - user
+      summary: Retrieve the users that currently have the PENDING sync status.
+      description: Since the number of users in the system can be very high, depending on the size of the environment, the end point has a multi-page structure and only returns a maximum of 20 objects at a time.
+      operationId: userGetUsersPending
+      parameters:
+        - name: page
+          schema:
+            type: integer
+            default: 0
+            example: 2
+          in: query
+          required: false
+      responses:
+        200:
+          description: Request successfull. The maximum ammount of 20 objects of the given page is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /user/failed:
+    get:
+      tags:
+        - user
+      summary: Retrieve the users that currently have the FAILED sync status.
+      description: Since the number of users in the system can be very high, depending on the size of the environment, the end point has a multi-page structure and only returns a maximum of 20 objects at a time.
+      operationId: userGetUsersFailed
+      parameters:
+        - name: page
+          schema:
+            type: integer
+            default: 0
+            example: 2
+          in: query
+          required: false
+      responses:
+        200:
+          description: Request successfull. The maximum ammount of 20 objects of the given page is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /user/{id}:
+    get:
+      tags:
+        - user
+      summary: Get a single user object from the database.
+      operationId: userGetUser
+      parameters:
+        - name: id
+          description: Id of the user that should be retreived.
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+      responses:
+        200:
+          description: Request successfull. The user with the given id is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Not found. The user with the given id not existing in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: user_not_existing
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /user/{id}/retry:
+    post:
+      tags:
+        - user
+      summary: Retry the sync to Azure AD for the given user.
+      operationId: userRetrySync
+      parameters:
+        - name: id
+          description: Id of the user that should be retried.
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+      responses:
+        200:
+          description: The retry was successfull. The user object is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Not found. The user with the given id not existing in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: user_not_existing
+        500:
+          description: An error occured during the retry. The error message holds further information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /user/status:
+    get:
+      tags:
+        - user
+      summary: Get a status of how many users are in each sync status. Useful for monitoring tools.
+      operationId: userGetStatus
+      responses:
+        200:
+          description: The request was sucessfull. The ammount of users in each sync status is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userCount:
+                    type: integer
+                    description: Overall ammount of users known by ldap2azure.
+                  usersOk:
+                    type: integer
+                    description: Ammount of users that have the OK sync state.
+                  usersPending:
+                    type: integer
+                    description: Number of users waiting for a sync to Azure AD.
+                  usersFailed:
+                    type: integer
+                    description: Number of users that failed to sync.
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /user/{id}/conflicts:
+    get:
+      tags:
+        - user
+      summary: Get possible conflicts for the internal user with the given id.
+      operationId: userGetConflicts
+      parameters:
+        - name: id
+          description: Id of the user for which possible conflicts should be retrieved for.
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+      responses:
+        200:
+          description: The request was sucessfull. Possible conflicting users in Azure are returned as an array. The changeState property of the returned users indicates where the users are located in Azure AD. They can be located in the trashbin (changeState == deleted) or be still active user accounts (changeState == unchanged). Not alle properties of the User object are populated. See the below example.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+                example:
+                  - onPremisesImmutableId: 72ea6SbbD0WSr3iT3oCrkQ==
+                    azureImmutableId: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+                    givenName: Max
+                    surname: Mustermann
+                    displayName: Max Mustermann
+                    userPrincipalName: Max.Mustermann@example.com
+                    hash: 2VQreuFtzfPKGqHeVhHqBw==
+                    changeState: unchanged
+                    lastChanged: '2020-08-13T21:35:33.140Z'
+        400:
+          description: The given user is not in the failed state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: user_not_failed
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Not found. The user with the given id not existing in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: user_not_existing
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /user/{id}/conflicts/resolve:
+    post:
+      tags:
+        - user
+      summary: Resolve an user conflict by merging or recreating user in Azure AD.
+      operationId: userResolveConflict
+      parameters:
+        - name: id
+          description: Id of the user for which an conflict should be resolved.
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConflictResolveRequest'
+      responses:
+        200:
+          description: The request was sucessfull. The updated User object is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        400:
+          description: One of the two users is in a wrong status.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/SingleLineError'
+                  - $ref: '#/components/schemas/TwoLineError'
+              examples:
+                user_not_failed:
+                  summary: The given (internal) user is not in the failed state.
+                  value:
+                    error: user_not_failed
+                azureId_already_assigned:
+                  summary: The given Azure user id is already asigned to another user in ldap2azure.
+                  value:
+                    error: azureId_already_assigned
+                    message: The provided Azure user id is already assigned to the internal user with id cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Not found. The user with the given id not existing in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: user_not_existing
+        500:
+          description: An error has occurred during communication with Azure. The error message holds further information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /sync:
+    get:
+      tags:
+        - sync
+      summary: Retrieve the sync objetcs currently stored in the database.
+      description: This endpoint retreives the sync objects from ldap2azure. Since the number of sync objects in the system can be very high, the end point has a multi-page structure and only returns a maximum of 20 objects at a time.
+      operationId: syncGetSyncs
+      parameters:
+        - name: page
+          schema:
+            type: integer
+            default: 0
+            example: 2
+          in: query
+          required: false
+      responses:
+        200:
+          description: Request successfull. The maximum ammount of 20 objects of the given page is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sync'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: []
+        - api_key: []
+  /sync/{id}:
+    get:
+      tags:
+        - sync
+      summary: Get a single sync object from the database.
+      operationId: syncGetSync
+      parameters:
+        - name: id
+          description: Id of the sync object that should be retreived.
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+      responses:
+        200:
+          description: Request successfull. The sync object with the given id is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sync'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Not found. The sync object with the given id not existing in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: sync_not_existing
+      security:
+        - cookieAuth: []
+        - api_key: []
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      properties:
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        lastSyncs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sync'
+          maxItems: 5
+        userCount:
+          type: integer
+          format: int64
+        usersPending:
+          type: integer
+          format: int64
+        usersFailed:
+          type: integer
+          format: int64
+    ApiKey:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+        name:
+          type: string
+          example: ExampleKey
+        lastUsed:
+          type: string
+          format: date-time
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+        onPremisesImmutableId:
+          type: string
+          example: 72ea6SbbD0WSr3iT3oCrkQ==
+        azureImmutableId:
+          type: string
+          example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+        givenName:
+          type: string
+          example: Max
+        surname:
+          type: string
+          example: Mustermann
+        displayName:
+          type: string
+          example: Max Mustermann
+        mailNickname:
+          type: string
+          example: max.mustermann
+        userPrincipalName:
+          type: string
+          example: Max.Mustermann@example.com
+        hash:
+          type: string
+          example: 2VQreuFtzfPKGqHeVhHqBw==
+        syncState:
+          type: string
+          enum:
+            - "ok"
+            - "pending"
+            - "failed"
+          example: ok
+        changeState:
+          type: string
+          enum:
+            - new
+            - unchanged
+            - changed
+            - deleted
+          example: unchanged
+        lastChanged:
+          type: string
+          format: date-time
+        lastSyncId:
+          type: string
+          example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+    Sync:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+        syncBegin:
+          type: string
+          format: date-time
+        syncEnd:
+          type: string
+          format: date-time
+        usersCreated:
+          type: integer
+          format: int64
+        usersChanged:
+          type: integer
+          format: int64
+        usersDeleted:
+          type: integer
+          format: int64
+        usersFailing:
+          type: integer
+          format: int64
+    ConflictResolveRequest:
+      type: object
+      properties:
+        azureImmutableId:
+          type: string
+          example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          description: Id of the azure user the conflict should be resolved with.
+        strategy:
+          type: string
+          enum: [merge, recreate]
+          example: merge
+          description: Use merge to merge both users, or recreate to delete the azure user completeley including all its data and recreate it from scratch.
+    SingleLineError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: not_authenticated
+    TwoLineError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: error_from_azure
+        message:
+          type: string
+          example: Another object with the same value for property userPrincipalName already exists.
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      in: header
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: cdsess

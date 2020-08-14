@@ -1,7 +1,6 @@
 package de.traber_info.home.ldap2azure.rest.controller;
 
 import de.traber_info.home.ldap2azure.h2.H2Helper;
-import de.traber_info.home.ldap2azure.model.object.User;
 import de.traber_info.home.ldap2azure.rest.anotation.CheckAuth;
 import de.traber_info.home.ldap2azure.rest.exception.NotFoundException;
 import de.traber_info.home.ldap2azure.rest.model.object.ApiKey;
