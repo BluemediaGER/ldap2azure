@@ -20,8 +20,6 @@ import de.traber_info.home.ldap2azure.rest.exception.NotFoundException;
 import de.traber_info.home.ldap2azure.rest.model.types.ConflictResolveStrategy;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 import de.traber_info.home.ldap2azure.util.RandomString;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 import java.net.URLEncoder;
@@ -36,9 +34,6 @@ import java.util.UUID;
  * @author Oliver Traber
  */
 public class UserService {
-
-    /** SLF4J logger for usage in this class */
-    private static final Logger LOG = LoggerFactory.getLogger(UserService.class.getName());
 
     /** RandomString used to generate random passwords for new users */
     private static final RandomString random = new RandomString(24);
