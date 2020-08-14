@@ -1,6 +1,7 @@
 package de.traber_info.home.ldap2azure.model.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.traber_info.home.ldap2azure.util.ConfigUtil;
 
 /**
  * Model for all general configuration variables used by ldap2azure
@@ -16,6 +17,10 @@ public class GeneralConfig {
     /** Boolean representing if debugging functionalities should be enabled */
     @JsonProperty("debuggingEnabled")
     private boolean debuggingEnabled;
+
+    /** Optional jdbc url for use with other databases like mysql */
+    @JsonProperty("databaseJDBCUrl")
+    private String databaseJDBCUrl;
 
     /**
      * Get the sync cron expression from the config file
@@ -33,4 +38,14 @@ public class GeneralConfig {
         return debuggingEnabled;
     }
 
+    /**
+     * Get the JDBC url that should be used to persist the internal userid.
+     * @return JDBC url that should be used for the internal database. If not set to fall back to local H2 database.
+     */
+    public String getDatabaseJDBCUrl() {
+        if (databaseJDBCUrl == null || "".equals(databaseJDBCUrl)) {
+            return "jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure";
+        }
+        return databaseJDBCUrl;
+    }
 }

@@ -37,16 +37,10 @@ public class ConfigUtil {
                 return config;
             } else {
                 LOG.info("Environmental variable LDAP2AZURE_CONFIG is not present. Falling back to default config location.");
-                try {
-                    readConfig(getJarPath());
-                    return config;
-                } catch (URISyntaxException ex) {
-                    LOG.error("Failed to load ldap2azure config file. Fallback to default config location failed.", ex);
-                    System.exit(1);
-                }
+                readConfig(getJarPath());
+                return config;
             }
         }
-        return null;
     }
 
     /**
@@ -69,11 +63,15 @@ public class ConfigUtil {
     /**
      * Get the path of the JAR file this class is packaged in.
      * @return Path of the current JAR file
-     * @throws URISyntaxException If the path could not be parsed
      */
-    public static String getJarPath() throws URISyntaxException {
-        return new File(Ldap2Azure.class.getProtectionDomain().getCodeSource().getLocation()
-                .toURI()).getParentFile().getPath();
+    public static String getJarPath() {
+        try {
+            return new File(Ldap2Azure.class.getProtectionDomain().getCodeSource().getLocation()
+                    .toURI()).getParentFile().getPath();
+        } catch (URISyntaxException ex) {
+            LOG.error("Failed to load ldap2azure config file. Fallback to default config location failed.", ex);
+        }
+        return null;
     }
 
 }

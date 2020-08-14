@@ -11,7 +11,6 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,22 +45,18 @@ public class HttpServer {
         ServletHolder jerseyServlet = new ServletHolder(new ServletContainer(new RestApplication()));
         srvCtxHandler.addServlet(jerseyServlet, "/api/*");
 
-        try {
-            String frontendDirectory = ConfigUtil.getJarPath() + "/web-frontend";
-            Path frontendPath = Paths.get(frontendDirectory);
-            if (Files.isDirectory(frontendPath)) {
-                LOG.info("[Http-Management] Frontend folder found. Serving static content under web-root.");
-                // Lastly, the default servlet for static root content.
-                // It is important that this is last.
-                ServletHolder holderHome = new ServletHolder("default", DefaultServlet.class);
-                holderHome.setInitParameter("resourceBase", frontendDirectory);
-                holderHome.setInitParameter("dirAllowed","false");
-                holderHome.setInitParameter("pathInfoOnly","true");
-                holderHome.setInitParameter("welcomeFiles", "index.html");
-                srvCtxHandler.addServlet(holderHome,"/*");
-            }
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+        String frontendDirectory = ConfigUtil.getJarPath() + "/web-frontend";
+        Path frontendPath = Paths.get(frontendDirectory);
+        if (Files.isDirectory(frontendPath)) {
+            LOG.info("[Http-Management] Frontend folder found. Serving static content under web-root.");
+            // Lastly, the default servlet for static root content.
+            // It is important that this is last.
+            ServletHolder holderHome = new ServletHolder("default", DefaultServlet.class);
+            holderHome.setInitParameter("resourceBase", frontendDirectory);
+            holderHome.setInitParameter("dirAllowed","false");
+            holderHome.setInitParameter("pathInfoOnly","true");
+            holderHome.setInitParameter("welcomeFiles", "index.html");
+            srvCtxHandler.addServlet(holderHome,"/*");
         }
 
         jetty.setHandler(srvCtxHandler);

@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.sql.SQLException;
 
 /**
@@ -55,7 +54,9 @@ public class H2Helper {
      */
     public static void init(boolean enableDebuggingConsole) {
         try {
-            persistentConnectionSource = new JdbcConnectionSource("jdbc:h2:" + ConfigUtil.getJarPath() + "/ldap2azure");
+            String persistenceJDBCUrl = ConfigUtil.getConfig().getGeneralConfig().getDatabaseJDBCUrl();
+            persistentConnectionSource = new JdbcConnectionSource(persistenceJDBCUrl);
+
             inMemoryConnectionSource = new JdbcConnectionSource("jdbc:h2:mem:cache");
 
             userDao = new UserDAOImpl(DaoManager.createDao(persistentConnectionSource, User.class));
@@ -72,11 +73,11 @@ public class H2Helper {
 
             if (enableDebuggingConsole) {
                 LOG.warn("Debugging mode is active. This will open an unsecured H2 Console on port 8082 of your host machine and is not recommended in an production environment.");
-                LOG.info("DEBUG - FileDB - jdbc:h2:{}", ConfigUtil.getJarPath() + "/ldap2azure");
+                LOG.info("DEBUG - PersistentDB - {}", persistenceJDBCUrl);
                 LOG.info("DEBUG - RamDB - jdbc:h2:mem:cache");
                 Server.createWebServer("-web", "-webAllowOthers", "-webPort" , "8082").start();
             }
-        } catch (SQLException | URISyntaxException ex) {
+        } catch (SQLException ex) {
             LOG.error("An unexpected error occurred", ex);
         }
     }
