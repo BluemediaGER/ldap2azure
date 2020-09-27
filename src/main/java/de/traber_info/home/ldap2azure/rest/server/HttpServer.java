@@ -48,7 +48,7 @@ public class HttpServer {
         String frontendDirectory = ConfigUtil.getJarPath() + "/web-frontend";
         Path frontendPath = Paths.get(frontendDirectory);
         if (Files.isDirectory(frontendPath)) {
-            LOG.info("[Http-Management] Frontend folder found. Serving static content under web-root.");
+            LOG.info("Frontend folder found. Serving static content under web-root.");
             // Lastly, the default servlet for static root content.
             // It is important that this is last.
             ServletHolder holderHome = new ServletHolder("default", DefaultServlet.class);
@@ -64,7 +64,7 @@ public class HttpServer {
         // Start the server thread
         try {
             jetty.start();
-            LOG.info("[Http-Management] Management interface and rest api successfully started on port {}",
+            LOG.info("Management interface and rest api successfully started on port {}",
                     config.getPort());
         } catch (Exception ex) {
             LOG.error("An unexpected error occurred", ex);

@@ -77,6 +77,22 @@ public class AuthenticationController {
     }
 
     /**
+     * Method to get the LoginResponse object used by the frontend dashboard.
+     * @return Returns the {@link LoginResponse} for use in the frontend.
+     */
+    @GET
+    @Path("/loginResponse")
+    @Produces(MediaType.APPLICATION_JSON)
+    public LoginResponse getLoginResponse() {
+        return new LoginResponse(
+                H2Helper.getSyncDao().getRecent(4),
+                H2Helper.getUserDao().getOkAmount(),
+                H2Helper.getUserDao().getPendingAmount(),
+                H2Helper.getUserDao().getFailedAmount()
+        );
+    }
+
+    /**
      * Method used by the client to invalidate an existing session.
      * @param sessionCookie Session cookie sent by the client.
      * @return Returns an empty array and http status 200 in all cases. Sets an empty session cookie on the client.
