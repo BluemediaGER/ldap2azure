@@ -81,6 +81,7 @@ public class AuthenticationController {
      * @return Returns the {@link LoginResponse} for use in the frontend.
      */
     @GET
+    @CheckAuth
     @Path("/loginResponse")
     @Produces(MediaType.APPLICATION_JSON)
     public LoginResponse getLoginResponse() {
