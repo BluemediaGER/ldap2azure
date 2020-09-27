@@ -1,6 +1,6 @@
 # ldap2azure
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3688138debf8442ea56998c5c3aca15b)](https://www.codacy.com/manual/BluemediaGER/ldap2azure?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=BluemediaGER/ldap2azure&amp;utm_campaign=Badge_Grade)  
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3688138debf8442ea56998c5c3aca15b)](https://www.codacy.com/manual/BluemediaGER/ldap2azure?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=BluemediaGER/ldap2azure&amp;utm_campaign=Badge_Grade) ![Maven Build](https://github.com/BluemediaGER/ldap2azure/workflows/Maven%20Build%20Test/badge.svg?branch=master&event=push)
 
 ldap2azure is a simple tool for automatically synchronizing and updating users from any standard LDAP to an Azure Active Directory.  
 
