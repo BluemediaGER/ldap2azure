@@ -93,7 +93,7 @@ The "general" section contains all parameters that are not directly required for
 ### The "msGraph" section
 The "msGraph" section contains all information required to connect to the Microsoft Graph API. The application under which ldap2azure runs must be a daemon application and have the Microsoft Graph permission 
 "Directory.ReadWrite.All" and "User.ReadWrite.All".  
-More about creating a Microsoft Graph application can be found [here](https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-daemon-overview).  
+More about the creation of a Microsoft Graph daemon application can be found [here](https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-daemon-app-registration).  
 
 | Key | Description | Example Value |
 |:----|:------------|:--------------|
