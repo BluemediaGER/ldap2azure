@@ -149,8 +149,11 @@ ldap2azure offers the possibility to automatically assign a license to new users
 
 ### The "web" section
 ldap2azure is equipped with a RESTful API and the possibility to provide a web frontend.  
-To provide a frontend, it must be located in a folder called "web-frontend" in the same directory as the JAR file of ldap2azure and contain an index.html file. If this is the case, it is automatically mounted at application startup.
+Once the feature is enabled, ldap2azure will create a default api user the first time it is started. The credentials are displayed in the console or log.
 
+To provide a frontend, it must be located in a folder called "web-frontend" in the same folder as the JAR file of ldap2azure. The "web-frontend" folder must also contain at least an index.html file. If this is the case, it is automatically mounted at application startup.
+
+My personal implementation of a frontend can be found on my GitHub account: [ldap2azure-frontend](https://github.com/BluemediaGER/ldap2azure-frontend)  
 The definition of the RESTful API is available at [https://bluemediager.github.io/ldap2azure](https://bluemediager.github.io/ldap2azure).
 
 | Key | Description | Example value |

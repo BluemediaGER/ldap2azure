@@ -5,6 +5,7 @@ import com.j256.ormlite.table.DatabaseTable;
 import de.traber_info.home.ldap2azure.h2.persister.LocalDateTimePersister;
 import de.traber_info.home.ldap2azure.util.RandomString;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -13,11 +14,19 @@ import java.util.UUID;
  *
  * @author Oliver Traber
  */
-@DatabaseTable(tableName = "api_session")
+@DatabaseTable(tableName = "api_sessions")
 public class ApiSession {
 
     /** Instance of the {@link RandomString} used to generate the session keys */
-    private static final RandomString random = new RandomString(32);
+    private static final RandomString random;
+
+    // Init SecureRandom
+    static {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        chars = chars + chars.toLowerCase();
+        chars = chars + "0123456789";
+        random = new RandomString(32,new SecureRandom(), chars);
+    }
 
     /** Internal id of the session */
     @DatabaseField(id = true)
@@ -27,19 +36,27 @@ public class ApiSession {
     @DatabaseField
     private String sessionKey;
 
+    /** Id of the {@link ApiUser} this {@link ApiSession} was created for */
+    @DatabaseField
+    private String parentApiUserId;
+
     /** {@link LocalDateTime} the session was last used to make an api call.
      * This is used to let session expire after a period of inactivity.
      */
     @DatabaseField(persisterClass = LocalDateTimePersister.class)
     private LocalDateTime lastAccessTime;
 
+    /** Default constructor for OrmLite */
+    private ApiSession() {}
+
     /**
      * Create an new instance and generate an random session id and an random session key.
      */
-    public ApiSession() {
+    public ApiSession(String parentApiUserId) {
         this.sessionId = UUID.randomUUID().toString();
         this.sessionKey = random.nextString();
         this.lastAccessTime = LocalDateTime.now();
+        this.parentApiUserId = parentApiUserId;
     }
 
     /**
@@ -64,6 +81,14 @@ public class ApiSession {
      */
     public String getSessionKey() {
         return sessionKey;
+    }
+
+    /**
+     * Get the id of the parent {@link ApiUser} of the session.
+     * @return Id of the parent {@link ApiUser} of the session.
+     */
+    public String getParentApiUserId() {
+        return parentApiUserId;
     }
 
     /**

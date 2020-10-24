@@ -5,9 +5,11 @@ import de.traber_info.home.ldap2azure.h2.H2Helper;
 import de.traber_info.home.ldap2azure.model.object.User;
 import de.traber_info.home.ldap2azure.model.type.SyncState;
 import de.traber_info.home.ldap2azure.rest.anotation.CheckAuth;
+import de.traber_info.home.ldap2azure.rest.anotation.CheckPermission;
 import de.traber_info.home.ldap2azure.rest.exception.GenericException;
 import de.traber_info.home.ldap2azure.rest.exception.NotFoundException;
 import de.traber_info.home.ldap2azure.rest.model.request.ConflictResolveRequest;
+import de.traber_info.home.ldap2azure.rest.model.types.Permission;
 import de.traber_info.home.ldap2azure.rest.service.UserService;
 
 import javax.validation.Valid;
@@ -126,6 +128,7 @@ public class UserController {
      */
     @POST
     @CheckAuth
+    @CheckPermission(Permission.READ_WRITE)
     @Path("/{id}/retry")
     @Produces(MediaType.APPLICATION_JSON)
     public User retrySync(@NotEmpty @PathParam("id") String userId) {
@@ -161,6 +164,7 @@ public class UserController {
      */
     @GET
     @CheckAuth
+    @CheckPermission(Permission.READ_WRITE)
     @Path("{id}/conflicts")
     @Produces(MediaType.APPLICATION_JSON)
     public List<User> getPotentialConflicts(@NotEmpty @PathParam("id") String userId) {
@@ -175,6 +179,7 @@ public class UserController {
      */
     @POST
     @CheckAuth
+    @CheckPermission(Permission.READ_WRITE)
     @Path("{id}/conflicts/resolve")
     @Produces(MediaType.APPLICATION_JSON)
     public User resolveConflict(@NotEmpty @PathParam("id") String internalUserId,

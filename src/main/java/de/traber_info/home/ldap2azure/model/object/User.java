@@ -22,7 +22,7 @@ import java.util.Base64;
  *
  * @author Oliver Traber
  */
-@DatabaseTable(tableName = "user")
+@DatabaseTable(tableName = "users")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
 

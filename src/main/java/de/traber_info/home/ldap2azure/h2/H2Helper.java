@@ -4,14 +4,12 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
-import de.traber_info.home.ldap2azure.h2.dao.ApiKeyDAOImpl;
-import de.traber_info.home.ldap2azure.h2.dao.ApiSessionDAOImpl;
-import de.traber_info.home.ldap2azure.h2.dao.SyncDAOImpl;
-import de.traber_info.home.ldap2azure.h2.dao.UserDAOImpl;
+import de.traber_info.home.ldap2azure.h2.dao.*;
 import de.traber_info.home.ldap2azure.model.object.Sync;
 import de.traber_info.home.ldap2azure.model.object.User;
 import de.traber_info.home.ldap2azure.rest.model.object.ApiKey;
 import de.traber_info.home.ldap2azure.rest.model.object.ApiSession;
+import de.traber_info.home.ldap2azure.rest.model.object.ApiUser;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 import org.h2.tools.Server;
 import org.slf4j.Logger;
@@ -48,6 +46,9 @@ public class H2Helper {
     /** {@link ApiKeyDAOImpl} used to persist {@link ApiKey} objects to the database */
     private static ApiKeyDAOImpl apiKeyDao;
 
+    /** {@link ApiUserDAOImpl} used to persist {@link ApiUser} objects to the database */
+    private static ApiUserDAOImpl apiUserDao;
+
     /**
      * Initialize the H2 database connections, tables and DAOs and start the debugging console if needed
      * @param enableDebuggingConsole Set true to enable H2's web based console on TCP port 8082
@@ -70,6 +71,9 @@ public class H2Helper {
 
             apiKeyDao = new ApiKeyDAOImpl(DaoManager.createDao(persistentConnectionSource, ApiKey.class));
             TableUtils.createTableIfNotExists(persistentConnectionSource, ApiKey.class);
+
+            apiUserDao = new ApiUserDAOImpl(DaoManager.createDao(persistentConnectionSource, ApiUser.class));
+            TableUtils.createTableIfNotExists(persistentConnectionSource, ApiUser.class);
 
             if (enableDebuggingConsole) {
                 LOG.warn("Debugging mode is active. This will open an unsecured H2 Console on port 8082 of your host machine and is not recommended in an production environment.");
@@ -126,6 +130,14 @@ public class H2Helper {
      */
     public static ApiKeyDAOImpl getApiKeyDao() {
         return apiKeyDao;
+    }
+
+    /**
+     * Get the {@link ApiUserDAOImpl} used to persist {@link ApiUser} objects to the database.
+     * @return {@link ApiUserDAOImpl} used to persist {@link ApiUser} objects to the database.
+     */
+    public static ApiUserDAOImpl getApiUserDao() {
+        return apiUserDao;
     }
 
 }

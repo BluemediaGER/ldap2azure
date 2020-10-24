@@ -2,10 +2,17 @@ package de.traber_info.home.ldap2azure.rest.controller;
 
 import de.traber_info.home.ldap2azure.h2.H2Helper;
 import de.traber_info.home.ldap2azure.rest.anotation.CheckAuth;
+import de.traber_info.home.ldap2azure.rest.anotation.CheckPermission;
+import de.traber_info.home.ldap2azure.rest.exception.BadRequestException;
 import de.traber_info.home.ldap2azure.rest.exception.NotFoundException;
 import de.traber_info.home.ldap2azure.rest.model.object.ApiKey;
-import de.traber_info.home.ldap2azure.rest.model.request.ApiKeyRequest;
-import de.traber_info.home.ldap2azure.rest.model.response.LoginResponse;
+import de.traber_info.home.ldap2azure.rest.model.object.ApiUser;
+import de.traber_info.home.ldap2azure.rest.model.request.ApiKeyCreateRequest;
+import de.traber_info.home.ldap2azure.rest.model.request.ApiUserCreateRequest;
+import de.traber_info.home.ldap2azure.rest.model.request.PasswordUpdateRequest;
+import de.traber_info.home.ldap2azure.rest.model.request.PermissionUpdateRequest;
+import de.traber_info.home.ldap2azure.rest.model.response.DashboardResponse;
+import de.traber_info.home.ldap2azure.rest.model.types.Permission;
 import de.traber_info.home.ldap2azure.rest.service.AuthenticationService;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -39,35 +46,29 @@ public class AuthenticationController {
     private HttpServletRequest sr;
 
     /**
-     * Method used by the client to get a new session
-     * @param password Password send by the client
-     * @return Returns an {@link LoginResponse} in case the login is successful or an error if it fails.
+     * Method used by an frontend to obtain a new session.
+     * @param password Password send by the client.
+     * @return Returns an {@link DashboardResponse} in case the login is successful, or an error if it fails.
      */
     @POST
     @Path("/login")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response login(@FormDataParam("password") String password) {
-        if (!AuthenticationService.validatePassword(password)) {
-            LOG.warn("Login failed from IP {} using password {} Reason: Invalid password", sr.getRemoteAddr(), password);
+    public Response login(@FormDataParam("username") String username, @FormDataParam("password") String password) {
+        if (!AuthenticationService.validateCredentials(username, password)) {
+            LOG.warn("Login failed from IP {} using username {} Reason: Invalid credentials", sr.getRemoteAddr(), username);
             return Response
                     .status(Response.Status.UNAUTHORIZED)
-                    .entity("{\"error\":\"invalid_password\"}")
+                    .entity("{\"error\":\"invalid_credentials\"}")
                     .build();
         }
-        String sessionKey = AuthenticationService.issueSession();
-        LoginResponse response = new LoginResponse(
-                H2Helper.getSyncDao().getRecent(4),
-                H2Helper.getUserDao().getOkAmount(),
-                H2Helper.getUserDao().getPendingAmount(),
-                H2Helper.getUserDao().getFailedAmount()
-        );
+        String sessionKey = AuthenticationService.issueSession(username);
         try {
             String cookieHostname = httpHeaders.getRequestHeader("host").get(0)
                     .substring(0, httpHeaders.getRequestHeader("host").get(0).lastIndexOf(':'));
             return Response
                     .ok()
-                    .entity(response)
+                    .entity(H2Helper.getApiUserDao().getByAttributeMatch("username", username))
                     .cookie(new NewCookie(new Cookie("cdsess", sessionKey, "/", cookieHostname)))
                     .build();
         } catch (Exception e) {
@@ -77,24 +78,7 @@ public class AuthenticationController {
     }
 
     /**
-     * Method to get the LoginResponse object used by the frontend dashboard.
-     * @return Returns the {@link LoginResponse} for use in the frontend.
-     */
-    @GET
-    @CheckAuth
-    @Path("/loginResponse")
-    @Produces(MediaType.APPLICATION_JSON)
-    public LoginResponse getLoginResponse() {
-        return new LoginResponse(
-                H2Helper.getSyncDao().getRecent(4),
-                H2Helper.getUserDao().getOkAmount(),
-                H2Helper.getUserDao().getPendingAmount(),
-                H2Helper.getUserDao().getFailedAmount()
-        );
-    }
-
-    /**
-     * Method used by the client to invalidate an existing session.
+     * Method used by an frontend to invalidate an existing session.
      * @param sessionCookie Session cookie sent by the client.
      * @return Returns an empty array and http status 200 in all cases. Sets an empty session cookie on the client.
      */
@@ -132,11 +116,13 @@ public class AuthenticationController {
      */
     @POST
     @CheckAuth
-    @Path("/api_key")
+    @CheckPermission(Permission.READ_WRITE)
+    @Path("/api-key")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public ApiKey createApiKey(@Valid ApiKeyRequest apiKeyRequest) {
-        return AuthenticationService.createApiKey(apiKeyRequest.getKeyName());
+    public Response createApiKey(@Valid ApiKeyCreateRequest apiKeyCreateRequest) {
+        ApiKey key = AuthenticationService.createApiKey(apiKeyCreateRequest);
+        return Response.created(null).entity(key).build();
     }
 
     /**
@@ -145,7 +131,7 @@ public class AuthenticationController {
      */
     @GET
     @CheckAuth
-    @Path("/api_key")
+    @Path("/api-key")
     @Produces(MediaType.APPLICATION_JSON)
     public List<ApiKey> getApiKeys() {
         return H2Helper.getApiKeyDao().getAll();
@@ -158,7 +144,7 @@ public class AuthenticationController {
      */
     @GET
     @CheckAuth
-    @Path("/api_key/{id}")
+    @Path("/api-key/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public ApiKey getApiKey(@NotEmpty @PathParam("id") String apiKeyId) {
         ApiKey apiKey = H2Helper.getApiKeyDao().getByAttributeMatch("id", apiKeyId);
@@ -173,7 +159,8 @@ public class AuthenticationController {
      */
     @GET
     @CheckAuth
-    @Path("/api_key/{key_id}/secret")
+    @CheckPermission(Permission.READ_WRITE)
+    @Path("/api-key/{key_id}/secret")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getApiKeySecret(@NotNull @PathParam("key_id") String keyId) {
         return Response
@@ -183,12 +170,44 @@ public class AuthenticationController {
     }
 
     /**
+     * Update the {@link Permission} of an existing {@link ApiKey}.
+     * @param authorizationHeader Authorization header used to prevent an {@link ApiKey}
+     *                            from changing it's own permission.
+     * @param keyId Id of the {@link ApiKey} the {@link Permission} should be updated for.
+     * @param permissionUpdateRequest {@link PermissionUpdateRequest} containing the new {@link Permission}.
+     * @return Updated {@link ApiKey} if the operation was successful.
+     */
+    @PUT
+    @CheckAuth
+    @CheckPermission(Permission.READ_WRITE)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/api-key/{id}/permission")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ApiKey updateApiKeyPermission(@HeaderParam("Authorization") String authorizationHeader,
+                                         @PathParam("id") String keyId,
+                                         @Valid PermissionUpdateRequest permissionUpdateRequest) {
+        // Prevent api key from changing it's own permission
+        if(authorizationHeader != null) {
+            ApiKey requestingKey = AuthenticationService.getApiKey(authorizationHeader);
+            if (keyId.equals(requestingKey.getId())) {
+                throw new BadRequestException("cant_change_own_permission");
+            }
+        }
+        ApiKey key = H2Helper.getApiKeyDao().getByAttributeMatch("id", keyId);
+        if (key == null) throw new NotFoundException("apikey_not_existing");
+        key.updatePermission(permissionUpdateRequest.getPermission());
+        H2Helper.getApiKeyDao().update(key);
+        return key;
+    }
+
+    /**
      * Delete the {@link ApiKey} with the given id from the database.
      * @param keyId Id of the {@link ApiKey} that should be deleted.
      */
     @DELETE
     @CheckAuth
-    @Path("/api_key/{key_id}")
+    @CheckPermission(Permission.READ_WRITE)
+    @Path("/api-key/{key_id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteApiKey(@NotNull @PathParam("key_id") String keyId) {
         AuthenticationService.deleteApiKey(keyId);
@@ -196,6 +215,130 @@ public class AuthenticationController {
                 .ok()
                 .entity("[]")
                 .build();
+    }
+
+    /**
+     * Create an new {@link ApiUser} in the database.
+     * @param request {@link ApiUserCreateRequest} containing the details for the new user.
+     * @return Created {@link ApiUser} if the operation was successful.
+     */
+    @POST
+    @CheckAuth
+    @CheckPermission(Permission.READ_WRITE)
+    @Path("/api-user")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createApiUser(@Valid ApiUserCreateRequest request) {
+        ApiUser user = AuthenticationService.createApiUser(request);
+        return Response.created(null).entity(user).build();
+    }
+
+    /**
+     * Get the list of all {@link ApiUser} currently stored in the database.
+     * @return {@link List} containing all {@link ApiUser} currently stored in the database.
+     */
+    @GET
+    @CheckAuth
+    @Path("/api-user")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ApiUser> getApiUsers() {
+        return H2Helper.getApiUserDao().getAll();
+    }
+
+    /**
+     * Get an specific {@link ApiUser} by it's id.
+     * @param userId Id of the {@link ApiUser} that should be retrieved.
+     * @return {@link ApiUser} matching the given id.
+     */
+    @GET
+    @CheckAuth
+    @Path("/api-user/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ApiUser getApiUser(@PathParam("id") String userId) {
+        ApiUser user = H2Helper.getApiUserDao().getByAttributeMatch("id", userId);
+        if (user == null) throw new NotFoundException("user_not_found");
+        return user;
+    }
+
+    /**
+     * Update the password of the currently logged in {@link ApiUser}.
+     * @param sessCookie Session key of the currently logged in {@link ApiUser}.
+     * @param passwordUpdateRequest {@link PasswordUpdateRequest} containing the new password for the user.
+     * @return Updated {@link ApiUser} if the operation was successful.
+     */
+    @PUT
+    @CheckAuth
+    @Path("/api-user/password")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ApiUser updateApiUserPassword(@CookieParam("cdsess") Cookie sessCookie,
+                                         @Valid PasswordUpdateRequest passwordUpdateRequest) {
+        if (sessCookie == null) throw new BadRequestException("only_user_sessions_allowed");
+        return AuthenticationService.updateApiUserPassword(sessCookie.getValue(), passwordUpdateRequest.getPassword());
+    }
+
+    /**
+     * Update the password of an {@link ApiUser} based on it's id.
+     * @param userId Id of the {@link ApiUser} that should be updated.
+     * @param passwordUpdateRequest {@link PasswordUpdateRequest} containing the new password for the user.
+     * @return Updated {@link ApiUser} if the operation was successful.
+     */
+    @PUT
+    @CheckAuth
+    @CheckPermission(Permission.READ_WRITE)
+    @Path("/api-user/{id}/password")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ApiUser updateApiUserPassword(@PathParam("id") String userId,
+                                         @Valid PasswordUpdateRequest passwordUpdateRequest) {
+        return AuthenticationService.updateApiUserPasswordById(userId, passwordUpdateRequest.getPassword());
+    }
+
+    /**
+     * Update the {@link Permission} for an {@link ApiUser} based on it's id.
+     * @param sessCookie Session key to prevent an user from changing his own permission.
+     * @param userId Id of the {@link ApiUser} that should be updated.
+     * @param permissionUpdateRequest {@link PermissionUpdateRequest} containing the new {@link Permission}.
+     * @return Updated {@link ApiUser} if the operation was successful.
+     */
+    @PUT
+    @CheckAuth
+    @CheckPermission(Permission.READ_WRITE)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/api-user/{id}/permission")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ApiUser updateApiUserPermission(@CookieParam("cdsess") Cookie sessCookie,
+                                           @PathParam("id") String userId,
+                                           @Valid PermissionUpdateRequest permissionUpdateRequest) {
+        // Prevent user from changing his own permission
+        if (sessCookie != null) {
+            ApiUser sessUser = AuthenticationService.getApiUserBySession(sessCookie.getValue());
+            if (sessUser != null) {
+                if (userId.equals(sessUser.getId())) {
+                    throw new BadRequestException("cant_change_own_permission");
+                }
+            }
+        }
+        ApiUser user = H2Helper.getApiUserDao().getByAttributeMatch("id", userId);
+        if (user == null) throw new NotFoundException("user_not_existing");
+        user.updatePermission(permissionUpdateRequest.getPermission());
+        H2Helper.getApiUserDao().update(user);
+        return user;
+    }
+
+    /**
+     * Delete an {@link ApiUser} from the database.
+     * @param sessCookie Session key to prevent an user from deleting himself.
+     * @param userId Id of the {@link ApiUser} that should be deleted.
+     * @return Empty array and status 200 if the operation was successful.
+     */
+    @DELETE
+    @CheckAuth
+    @CheckPermission(Permission.READ_WRITE)
+    @Path("/api-user/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteApiUser(@CookieParam("cdsess") Cookie sessCookie, @PathParam("id") String userId) {
+        return AuthenticationService.deleteApiUser(sessCookie, userId);
     }
 
 }

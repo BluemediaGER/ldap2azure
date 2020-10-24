@@ -33,4 +33,16 @@ public class ApiSessionDAOImpl extends GenericDAOImpl<ApiSession> {
         deleteBuilder.delete();
     }
 
+    /**
+     * Delete all {@link ApiSession} whose parentApiUserId matches the given one.
+     * @param parentApiUserId Id of the parent {@link de.traber_info.home.ldap2azure.rest.model.object.ApiUser}
+     *                        whose sessions should be removed.
+     * @throws SQLException Exception if an error occurred.
+     */
+    public void deleteAllByParentApiUserId(String parentApiUserId) throws SQLException {
+        DeleteBuilder<ApiSession, String> deleteBuilder = dao.deleteBuilder();
+        deleteBuilder.where().eq("parentApiUserId", parentApiUserId);
+        deleteBuilder.delete();
+    }
+
 }

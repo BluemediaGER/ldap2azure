@@ -40,11 +40,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         Cookie sessCookie = null;
 
         // Check if the client has sent an bearer authentication token and validate it
-        if (context.getHeaderString("Authorization") != null) {
-            if (AuthenticationService.validateApiKey(context.getHeaderString("Authorization"))) {
+        if (context.getHeaderString("X-API-Key") != null) {
+            if (AuthenticationService.validateApiKey(context.getHeaderString("X-API-Key"))) {
                 return;
             } else {
-                abort(context, "Bearer token invalid");
+                abort(context, "Api key invalid");
             }
         }
 

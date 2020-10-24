@@ -4,12 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import de.traber_info.home.ldap2azure.h2.H2Helper;
+import de.traber_info.home.ldap2azure.rest.model.object.ApiUser;
+import de.traber_info.home.ldap2azure.rest.model.types.Permission;
+import de.traber_info.home.ldap2azure.util.RandomString;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.ApplicationPath;
+import java.security.SecureRandom;
+import java.util.Locale;
 
 /**
  * Main entry point for the optional ldap2azure REST api.
@@ -43,7 +49,27 @@ public class RestApplication extends ResourceConfig {
         jsonProvider.setMapper(objectMapper);
         register(jsonProvider);
         LOG.info("Features and providers registered successfully");
+
+        // Create the default api user if no users exist in the database
+        createDefaultApiUserIfNotExistent();
         LOG.info("Init phase finished successfully");
+    }
+
+    /**
+     * Create the default api user if no user exist in the database.
+     */
+    private static void createDefaultApiUserIfNotExistent() {
+        if (H2Helper.getApiUserDao().getAmount() == 0) {
+            String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            String lower = upper.toLowerCase(Locale.ROOT);
+            String numbers = "0123456789";
+            String symbols = upper + lower + numbers;
+            String password = new RandomString(12, new SecureRandom(), symbols).nextString();
+
+            ApiUser defaultUser = new ApiUser("admin", password, Permission.READ_WRITE);
+            H2Helper.getApiUserDao().persist(defaultUser);
+            LOG.info("Created default api user --> Username: admin / Password: {}", password);
+        }
     }
 
 }

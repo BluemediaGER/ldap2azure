@@ -12,6 +12,8 @@ servers:
 tags:
   - name: auth
     description: Everything about authentication
+  - name: misc
+    description: Operations that do not fit anywhere else
   - name: user
     description: Operations about users
   - name: sync
@@ -21,11 +23,11 @@ paths:
     post:
       tags:
         - auth
-      summary: Authenticate against ldap2azure using an password to gain an session cookie for further actions.
-      description: This endpoint is only intended for use in a frontend. To authorize access from another backend, please use an API key instead.
+      summary: Authenticate against ldap2azure using an username and password to gain an session cookie for further actions.
+      description: This endpoint is only intended for use in a frontend. To authorize access from another application, please use an ApiKey instead.
       operationId: authLoginPassword
       requestBody:
-        description: Login credentials to authenticate against the config file.
+        description: Login credentials to authenticate against the backend.
         content:
           multipart/form-data:
             schema:
@@ -34,12 +36,12 @@ paths:
       responses:
         200:
           description: >
-            Successfully authenticated.
-            The session key is returned in a cookie named `cdsess`. You need to include this cookie in subsequent requests.
+            Successfully authenticated. The response contains your own ApiUser objects as well as
+            the session key in a cookie named `cdsess`. You need to include this cookie in all subsequent requests.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
+                $ref: '#/components/schemas/ApiUser'
           headers:
             Set-Cookie:
               schema:
@@ -52,7 +54,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
               example:
-                error: invalid_password
+                error: invalid_credentials
   /auth/ack:
     get:
       tags:
@@ -101,22 +103,18 @@ paths:
                 $ref: '#/components/schemas/SingleLineError'
       security:
         - cookieAuth: []
-  /auth/api_key:
+  /auth/api-key:
     post:
       tags:
         - auth
-      summary: Creates a new api key.
-      description: This endpoint can be used to create static api keys for use in other backends.
+      summary: Creates a new ApiKey.
+      description: This endpoint can be used to create static ApiKeys for use in other backends.
       operationId: authCreateKey
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                keyName:
-                  type: string
-                  example: ExampleKey
+              $ref: "#/components/schemas/ApiKeyCreateRequest"
       responses:
         200:
           description: Api key successfully created. The secret can be retrieved using another endpoint below.
@@ -130,13 +128,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "insufficient_permissions"
       security:
         - cookieAuth: []
         - api_key: []
     get:
       tags:
         - auth
-      summary: Get a list of all api keys stored in the database.
+      summary: Get a list of all ApiKeys stored in the database.
       operationId: authGetApiKeys
       responses:
         200:
@@ -156,15 +162,15 @@ paths:
       security:
         - cookieAuth: []
         - api_key: []
-  /auth/api_key/{id}:
+  /auth/api-key/{id}:
     get:
       tags:
         - auth
-      summary: Get a single api key object from the database.
+      summary: Get a single ApiKey object from the database.
       operationId: authGetApiKey
       parameters:
         - name: id
-          description: Id of the api key that should be retreived.
+          description: Id of the ApiKey that should be retreived.
           schema:
             type: string
             example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
@@ -172,7 +178,7 @@ paths:
           required: true
       responses:
         200:
-          description: Request successfull. The api key with the given id is returned.
+          description: Request successfull. The ApiKey with the given id is returned.
           content:
             application/json:
               schema:
@@ -184,7 +190,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
         404:
-          description: Not found. The api key with the given id not existing in the database.
+          description: The ApiKey with the given id could not be found.
           content:
             application/json:
               schema:
@@ -197,7 +203,7 @@ paths:
     delete:
       tags:
         - auth
-      summary: Delete an api key from the database. This invalidates the key immediately.
+      summary: Delete an ApiKey from the database. This invalidates the key immediately.
       operationId: authDeleteApiKey
       parameters:
         - name: id
@@ -222,22 +228,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
-        404:
-          description: Key with the given id could not be found.
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
               example:
-                error: keyid_not_existing
+                error: "insufficient_permissions"
+        404:
+          description: The ApiKey with the given id could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: apikey_not_existing
       security:
         - cookieAuth: []
         - api_key: []
-  /auth/api_key/{id}/secret:
+  /auth/api-key/{id}/secret:
     get:
       tags:
         - auth
-      summary: Get the secret for the given api key from the database.
+      summary: Get the secret for the given ApiKey from the database.
       description: This returns the secret you have to use in the `Authorization` Header to authenticate a backend application.
       operationId: authGetApiKeySecret
       parameters:
@@ -247,7 +261,7 @@ paths:
             example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
           in: path
           required: true
-          description: Id of the key for which the secret should be fetched.
+          description: Id of the ApiKey for which the secret should be fetched.
       responses:
         200:
           description: Secret sucessfully retreived.
@@ -265,17 +279,407 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
-        404:
-          description: Key with the given id could not be found.
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
               example:
-                error: keyid_not_existing
+                error: "insufficient_permissions"
+        404:
+          description: The ApiKey with the given id could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: apikey_not_existing
       security:
         - cookieAuth: []
         - api_key: []
+  /auth/api-key/{id}/permission:
+    put:
+      tags:
+        - auth
+      summary: Update the permission of the ApiKey with the given id.
+      operationId: authUpdateApiKeyPermissionById
+      parameters:
+        - name: id
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+          description: Id of the ApiKey for which the permission should be updated.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PermissionUpdateRequest"
+      responses:
+        200:
+          description: Permission sucessfully changed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKey"
+        400:
+          description: You are trying to change your own ApiKeys permission, which is prevented by the backend.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "cant_change_own_permission"
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "insufficient_permissions"
+        404:
+          description: The ApiKey with the given id could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: apikey_not_existing
+      security:
+        - cookieAuth: [ ]
+        - api_key: [ ]
+  /auth/api-user:
+    post:
+      tags:
+        - auth
+      summary: Creates a new ApiUser.
+      description: This endpoint can be used to create new ApiUsers.
+      operationId: authCreateApiUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiUserCreateRequest"
+      responses:
+        200:
+          description: ApiUser successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiUser'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "insufficient_permissions"
+      security:
+        - cookieAuth: [ ]
+        - api_key: [ ]
+    get:
+      tags:
+        - auth
+      summary: Get an list of all currently existing ApiUsers.
+      description: This returns an list containing all ApiUsers currently stored in the database.
+      operationId: authGetApiUsers
+      responses:
+        200:
+          description: List of ApiUsers sucessfully retrieved.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiUser'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: [ ]
+        - api_key: [ ]
+  /auth/api-user/{id}:
+    get:
+      tags:
+        - auth
+      summary: Get a single ApiUser object from the database.
+      operationId: authGetApiUser
+      parameters:
+        - name: id
+          description: Id of the ApiUser that should be retreived.
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+      responses:
+        200:
+          description: Request successfull. The ApiUser with the given id is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiUser'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Not found. The ApiUser with the given id not existing in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: apiuser_not_existing
+      security:
+        - cookieAuth: [ ]
+        - api_key: [ ]
+    delete:
+      tags:
+        - auth
+      summary: Delete an ApiUser from the database. This also invalidates all of it's child ApiSessions imediatly.
+      operationId: authDeleteApiUser
+      parameters:
+        - name: id
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+          description: Id of the ApiUser that should be deleted.
+      responses:
+        200:
+          description: ApiUser sucessfully deleted.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { }
+                example: [ ]
+        400:
+          description: You are trying delete your own user, which is prevented by the backend.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "cant_delete_own_user"
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "insufficient_permissions"
+        404:
+          description: ApiUser with the given id could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: apiuser_not_existing
+      security:
+        - cookieAuth: [ ]
+        - api_key: [ ]
+  /auth/api-user/password:
+    put:
+      tags:
+        - auth
+      summary: Resets the password of the currently logged in ApiUser.
+      description: Update the password of the currently logged in ApiUser. The request will fail if you use an ApiKey for authentication.
+      operationId: authUpdateApiUserPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChangeRequest"
+      responses:
+        200:
+          description: Password sucessfully changed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiUser"
+        400:
+          description: You are using an ApiKey for authentication.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "only_user_sessions_allowed"
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: [ ]
+        - api_key: [ ]
+  /auth/api-user/{id}/password:
+    put:
+      tags:
+        - auth
+      summary: Resets the password of the ApiUser with the given id.
+      description: Update the password of the ApiUser with the given id.
+      operationId: authUpdateApiUserPasswordById
+      parameters:
+        - name: id
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+          description: Id of the ApiUser for which the password should be reset.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChangeRequest"
+      responses:
+        200:
+          description: Password sucessfully changed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiUser"
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "insufficient_permissions"
+        404:
+          description: The ApiUser with the given id could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: apiuser_not_existing
+      security:
+        - cookieAuth: [ ]
+        - api_key: [ ]
+  /auth/api-user/{id}/permission:
+    put:
+      tags:
+        - auth
+      summary: Update the permission of the ApiUser with the given id.
+      operationId: authUpdateApiUserPermissionById
+      parameters:
+        - name: id
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+          description: Id of the ApiUser for which the permission should be updated.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PermissionUpdateRequest"
+      responses:
+        200:
+          description: Permission sucessfully changed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiUser"
+        400:
+          description: You are trying to change your own users permission, which is prevented by the backend.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "cant_change_own_permission"
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "insufficient_permissions"
+        404:
+          description: The ApiUser with the given id could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: apiuser_not_existing
+      security:
+        - cookieAuth: [ ]
+        - api_key: [ ]
+  /dashboard:
+    get:
+      tags:
+        - misc
+      summary: Get the DashboardResponse object again after the login was performed.
+      description: This endpoint can be used for an dashboard in a frontend.
+      operationId: miscGetDashboard
+      responses:
+        200:
+          description: Successfull. The DashboardResponse is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+      security:
+        - cookieAuth: [ ]
+        - api_key: [ ]
   /user:
     get:
       tags:
@@ -473,6 +877,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "insufficient_permissions"
         404:
           description: Not found. The user with the given id not existing in the database.
           content:
@@ -572,6 +984,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "insufficient_permissions"
         404:
           description: Not found. The user with the given id not existing in the database.
           content:
@@ -635,6 +1055,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleLineError'
+        403:
+          description: You have insufficient permissions. This results from an read-only permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: "insufficient_permissions"
         404:
           description: Not found. The user with the given id not existing in the database.
           content:
@@ -723,14 +1151,58 @@ paths:
       security:
         - cookieAuth: []
         - api_key: []
+  /sync/{id}/users:
+    get:
+      tags:
+        - sync
+      summary: Get all users that were last modified by the specified sync.
+      operationId: syncGetSyncUsers
+      parameters:
+        - name: id
+          description: Id of the sync object that should be retreived.
+          schema:
+            type: string
+            example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+          in: path
+          required: true
+      responses:
+        200:
+          description: Request successfull. The sync object with the given id is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        401:
+          description: You are not authenticated or your authentication secret is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+        404:
+          description: Not found. The sync object with the given id not existing in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleLineError'
+              example:
+                error: sync_not_existing
+      security:
+        - cookieAuth: []
+        - api_key: []
 components:
   schemas:
     LoginRequest:
       type: object
       properties:
+        username:
+          type: string
+          example: "admin"
         password:
           type: string
-    LoginResponse:
+          example: "VerySecurePassword1234"
+    DashboardResponse:
       type: object
       properties:
         lastSyncs:
@@ -739,6 +1211,9 @@ components:
             $ref: '#/components/schemas/Sync'
           maxItems: 5
         userCount:
+          type: integer
+          format: int64
+        usersFine:
           type: integer
           format: int64
         usersPending:
@@ -759,6 +1234,72 @@ components:
         lastUsed:
           type: string
           format: date-time
+        permission:
+          type: string
+          enum:
+            - "read"
+            - "read_write"
+          example: "read_write"
+    ApiKeyCreateRequest:
+      type: object
+      properties:
+        keyName:
+          type: string
+          example: "ExampleKey"
+        permission:
+          type: string
+          enum:
+            - "read"
+            - "read_write"
+          example: "read_write"
+    ApiUser:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: cb78467f-6dbd-4563-ac01-0fdc9ca4c194
+        username:
+          type: string
+          example: "admin"
+        lastLoginTime:
+          type: string
+          format: date-time
+        permission:
+          type: string
+          enum:
+            - "read"
+            - "read_write"
+          example: "read_write"
+    ApiUserCreateRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          example: "VerySecurePassword1234"
+        permission:
+          type: string
+          enum:
+            - "read"
+            - "read_write"
+          example: "read_write"
+    PasswordChangeRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          example: "VerySecurePassword1234"
+    PermissionUpdateRequest:
+      type: object
+      properties:
+        permission:
+          type: string
+          enum:
+            - "read"
+            - "read_write"
+          example: "read_write"
     User:
       type: object
       properties:
@@ -864,7 +1405,7 @@ components:
   securitySchemes:
     api_key:
       type: apiKey
-      name: Authorization
+      name: X-API-Key
       in: header
     cookieAuth:
       type: apiKey

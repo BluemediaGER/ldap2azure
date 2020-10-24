@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  *
  * @author Oliver Traber
  */
-@DatabaseTable(tableName = "sync")
+@DatabaseTable(tableName = "syncs")
 public class Sync {
 
     /** Internal id of the sync */

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import de.traber_info.home.ldap2azure.h2.persister.LocalDateTimePersister;
+import de.traber_info.home.ldap2azure.h2.persister.PermissionPersister;
+import de.traber_info.home.ldap2azure.rest.model.types.Permission;
 import de.traber_info.home.ldap2azure.util.RandomString;
 
 import java.time.LocalDateTime;
@@ -34,6 +36,10 @@ public class ApiKey {
     @JsonIgnore
     private String authenticationKey;
 
+    /** Permission level for the api key */
+    @DatabaseField(persisterClass = PermissionPersister.class)
+    public Permission permission;
+
     /** {@link LocalDateTime} the api key was last used to make an api call. */
     @DatabaseField(persisterClass = LocalDateTimePersister.class)
     private LocalDateTime lastAccessTime;
@@ -41,11 +47,12 @@ public class ApiKey {
     /**
      * Create an new instance and generate an random key id and an random authentication key.
      */
-    public ApiKey(String keyName) {
+    public ApiKey(String keyName, Permission permission) {
         this.id = UUID.randomUUID().toString();
         this.keyName = keyName;
         this.authenticationKey = random.nextString();
         this.lastAccessTime = LocalDateTime.now();
+        this.permission = permission;
     }
 
     /**
@@ -90,10 +97,27 @@ public class ApiKey {
     }
 
     /**
+     * Get the {@link Permission} of the api key.
+     * @return {@link Permission} of the api key.
+     */
+    public Permission getPermission() {
+        return permission;
+    }
+
+    /**
      * Reset the {@link LocalDateTime} the api key was last used to make an api call to the current time.
      */
     public void resetLastAccessTime() {
         this.lastAccessTime = LocalDateTime.now();
+    }
+
+    /**
+     * Update the {@link Permission} of the {@link ApiKey}.
+     * @param permission New {@link Permission} that should be set.
+     */
+    @JsonIgnore
+    public void updatePermission(Permission permission) {
+        this.permission = permission;
     }
 
 }

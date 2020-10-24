@@ -35,6 +35,7 @@ public class HttpServer {
     public static void start() {
         // Initialize rest api and web-based management interface if enabled in the config file
         WebConfig config = ConfigUtil.getConfig().getWebConfig();
+
         // Create embedded Jetty server
         jetty = new Server(config.getPort());
 
