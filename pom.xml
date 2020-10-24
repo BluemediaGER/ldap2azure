@@ -13,14 +13,17 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+
         <jersey.target.version>2.32</jersey.target.version>
+        <jetty.target.version>9.4.33.v20201020</jetty.target.version>
+        <jackson.target.version>2.11.3</jackson.target.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.11.3</version>
+            <version>${jackson.target.version}</version>
         </dependency>
 
         <dependency>
@@ -110,12 +113,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
             <artifactId>jackson-jaxrs-json-provider</artifactId>
-            <version>2.11.3</version>
+            <version>${jackson.target.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.11.3</version>
+            <version>${jackson.target.version}</version>
         </dependency>
 
         <dependency>
@@ -133,13 +136,13 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>9.4.33.v20201020</version>
+            <version>${jetty.target.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
-            <version>9.4.33.v20201020</version>
+            <version>${jetty.target.version}</version>
         </dependency>
     </dependencies>
 
