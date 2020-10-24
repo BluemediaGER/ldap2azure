@@ -160,7 +160,6 @@ The definition of the RESTful API is available at [https://bluemediager.github.i
 |:----|:------------| :-------------|
 | featureEnabled | Can be set true to enable the function or false to disable it | true |
 | port | Sets the port under which the API and the management interface can be reached | 8080 |
-| password | Password, which is required to access the management interface | VerySecurePassword1234 |
 
 ## Logging
 By default, logs are stored in the "log" subdirectory of the directory you are running ldap2azure from. The log files are automatically rotated every 24 hours and archived as .gz files. All logs older than 30 days are automatically deleted.
