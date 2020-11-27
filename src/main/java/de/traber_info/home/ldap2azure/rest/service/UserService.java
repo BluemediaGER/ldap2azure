@@ -7,6 +7,8 @@ import com.microsoft.graph.http.GraphServiceException;
 import com.microsoft.graph.models.extensions.AssignedLicense;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.models.extensions.PasswordProfile;
+import com.microsoft.graph.options.HeaderOption;
+import com.microsoft.graph.requests.extensions.IDirectoryObjectRestoreRequest;
 import de.traber_info.home.ldap2azure.h2.H2Helper;
 import de.traber_info.home.ldap2azure.h2.dao.UserDAOImpl;
 import de.traber_info.home.ldap2azure.model.object.User;
@@ -39,10 +41,10 @@ public class UserService {
     private static final RandomString random = new RandomString(24);
 
     /** Instance of the UserDAO used to access the database */
-    private static UserDAOImpl userDAO = H2Helper.getUserDao();
+    private static final UserDAOImpl userDAO = H2Helper.getUserDao();
 
     /** Instance of the GraphServiceClient used to make changed in Azure AD */
-    private static IGraphServiceClient msGraphServiceClient = GraphClientUtil.getGraphServiceClient();
+    private static final IGraphServiceClient msGraphServiceClient = GraphClientUtil.getGraphServiceClient();
 
     /**
      * Retry the sync of an failed user.
@@ -80,7 +82,8 @@ public class UserService {
         } catch (GraphServiceException ex) {
             user.setSyncState(SyncState.FAILED);
             userDAO.update(user);
-            throw new GenericException(Response.Status.INTERNAL_SERVER_ERROR, "error_from_azure", ex.getServiceError().message);
+            throw new GenericException(Response.Status.INTERNAL_SERVER_ERROR,
+                    "error_from_azure", ex.getServiceError().message);
         }
 
         // Assign default licence to user
@@ -174,7 +177,13 @@ public class UserService {
             // Restore user from trashbin. Temporarily disable logging to prevent intentional errors from being logged.
             try {
                 ((CustomGraphLogger) msGraphServiceClient.getLogger()).setLogActive(false);
-                msGraphServiceClient.directory().deletedItems(azureUserId).restore().buildRequest().post();
+                IDirectoryObjectRestoreRequest request = msGraphServiceClient
+                        .directory()
+                        .deletedItems(azureUserId)
+                        .restore()
+                        .buildRequest();
+                request.getHeaders().add(new HeaderOption("Content-Type", "application/json"));
+                request.post();
                 ((CustomGraphLogger) msGraphServiceClient.getLogger()).setLogActive(true);
             } catch (GraphServiceException ex) {
                 // Do nothing. The request fails if the user is not in the trashbin.
@@ -184,7 +193,8 @@ public class UserService {
             try {
                 msGraphServiceClient.users(user.getAzureImmutableId()).buildRequest().patch(user.toAzureUser());
             } catch (GraphServiceException ex) {
-                throw new GenericException(Response.Status.INTERNAL_SERVER_ERROR, "error_from_azure", ex.getServiceError().message);
+                throw new GenericException(Response.Status.INTERNAL_SERVER_ERROR,
+                        "error_from_azure", ex.getServiceError().message);
             }
             user.setSyncState(SyncState.OK);
             user.setChangeState(ChangeState.UNCHANGED);
