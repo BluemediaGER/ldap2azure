@@ -89,14 +89,15 @@ public class AzureSyncService {
                 .eq("syncState", SyncState.PENDING.toValue());
         List<User> newUsers = userDAO.query(newUserQueryBuilder);
 
-        // Prepare default licence if auto licensing is enabled
+        // Prepare default licenses if auto licensing is enabled
         List<AssignedLicense> addLicensesList = new ArrayList<>();
         List<UUID> removeLicensesList = new ArrayList<>();
         if (ConfigUtil.getConfig().getAutoLicencingConfig().isEnabled()) {
-            AssignedLicense addLicenses = new AssignedLicense();
-            addLicenses.skuId = UUID.fromString(
-                    ConfigUtil.getConfig().getAutoLicencingConfig().getDefaultLicenceSkuId());
-            addLicensesList.add(addLicenses);
+            for (String licenseSku : ConfigUtil.getConfig().getAutoLicencingConfig().getDefaultLicenceSkuIDs()) {
+                AssignedLicense license = new AssignedLicense();
+                license.skuId = UUID.fromString(licenseSku);
+                addLicensesList.add(license);
+            }
         }
 
         for (User user : newUsers) {
@@ -132,9 +133,9 @@ public class AzureSyncService {
                 continue;
             }
 
-            // Assign default licence to user
+            // Assign default licenses to user
             if (ConfigUtil.getConfig().getAutoLicencingConfig().isEnabled()) {
-                LOG.trace("Assigning default license to user {}...", user.getDisplayName());
+                LOG.trace("Assigning default licenses to user {}...", user.getDisplayName());
                 msGraphServiceClient.users(id).assignLicense(addLicensesList, removeLicensesList).buildRequest().post();
             }
 

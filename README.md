@@ -70,12 +70,13 @@ Below is an example configuration that synchronizes users from an Samba 4 Active
   },
   "autoLicensing": {
     "featureEnabled": true,
-    "defaultLicenseSkuId": "19dceafd-77c1-4db5-b36b-3cc602144b04"
+    "defaultLicenseSkuIDs": [
+      "19dceafd-77c1-4db5-b36b-3cc602144b04"
+    ]
   },
   "web": {
     "featureEnabled": false,
-    "port": 8080,
-    "password": "VerySecurePassword1234"
+    "port": 8080
   }
 }
 ```  

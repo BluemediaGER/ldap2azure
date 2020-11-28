@@ -91,10 +91,11 @@ public class UserService {
             List<AssignedLicense> addLicensesList = new ArrayList<>();
             List<UUID> removeLicensesList = new ArrayList<>();
             if (ConfigUtil.getConfig().getAutoLicencingConfig().isEnabled()) {
-                AssignedLicense addLicenses = new AssignedLicense();
-                addLicenses.skuId = UUID.fromString(
-                        ConfigUtil.getConfig().getAutoLicencingConfig().getDefaultLicenceSkuId());
-                addLicensesList.add(addLicenses);
+                for (String licenseSku : ConfigUtil.getConfig().getAutoLicencingConfig().getDefaultLicenceSkuIDs()) {
+                    AssignedLicense license = new AssignedLicense();
+                    license.skuId = UUID.fromString(licenseSku);
+                    addLicensesList.add(license);
+                }
             }
             msGraphServiceClient.users(id).assignLicense(addLicensesList, removeLicensesList).buildRequest().post();
         }
