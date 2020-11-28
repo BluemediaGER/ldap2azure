@@ -146,7 +146,7 @@ ldap2azure offers the possibility to automatically assign a license to new users
 | Key | Description | Example value |
 |:----|:------------| :-------------|
 | featureEnabled | Can be set true to enable the function or false to disable it | true |
-| defaultLicenseSkuId | GUID of the license to be used by default. More can be read [here](https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/licensing-service-plan-reference) | 05e9a617-0261-4cee-bb44-138d3ef5d965 |
+| defaultLicenseSkuIDs | Array of GUIDs of the licenses to be used by default. More can be read [here](https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/licensing-service-plan-reference) | ["05e9a617-0261-4cee-bb44-138d3ef5d965"] |
 
 ### The "web" section
 ldap2azure is equipped with a RESTful API and the possibility to provide a web frontend.  
