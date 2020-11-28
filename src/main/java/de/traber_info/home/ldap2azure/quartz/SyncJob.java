@@ -25,11 +25,14 @@ public class SyncJob implements Job {
      */
     @Override
     public void execute(JobExecutionContext jobExecutionContext) {
-        LdapImportService.run();
-        try {
-            new AzureSyncService().run();
-        } catch (SQLException ex) {
-            LOG.error("An unexpected error occurred", ex);
+        long changedUsers = LdapImportService.run();
+        // Run Azure sync if one or more users changed in the source LDAP.
+        if (changedUsers > 0) {
+            try {
+                new AzureSyncService().run();
+            } catch (SQLException ex) {
+                LOG.error("An unexpected error occurred", ex);
+            }
         }
     }
 

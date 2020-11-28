@@ -36,8 +36,9 @@ public class LdapImportService {
 
     /**
      * Run an import from the source ldap server.
+     * @return Amount of users changed by this import cycle.
      */
-    public static void run() {
+    public static long run() {
         LdapConfig ldapConfig = ConfigUtil.getConfig().getLdapConfig();
         try {
             ldapUtil = new LdapUtil(ldapConfig.getLdapUrl(), ldapConfig.getBindUser(), ldapConfig.getBindPassword(),
@@ -45,10 +46,11 @@ public class LdapImportService {
                     ldapConfig.isIgnoreSSLErrors());
 
             Map<String, User> ldapUsers = getLdapUsers();
-            updateDatabase(ldapUsers);
+            return updateDatabase(ldapUsers);
         } catch (NamingException ex) {
             LOG.error("An unexpected error occurred", ex);
         }
+        return 0;
     }
 
     /**
@@ -116,8 +118,9 @@ public class LdapImportService {
     /**
      * Update the internal database.
      * @param users Map containing the users read from the source ldap server.
+     * @return Amount of users changed by this import cycle.
      */
-    private static void updateDatabase(Map<String, User> users) {
+    private static long updateDatabase(Map<String, User> users) {
         LOG.info("Running import for {} ldap users...", users.size());
 
         long newUsers = 0L;
@@ -166,6 +169,7 @@ public class LdapImportService {
 
         LOG.info("LDAP import finished. Result: {} NEW, {} CHANGED, {} DELETED, {} UNCHANGED",
                 newUsers, changedUsers, deletedUsers, unchangedUsers);
+        return newUsers + changedUsers + deletedUsers;
     }
 
 }
