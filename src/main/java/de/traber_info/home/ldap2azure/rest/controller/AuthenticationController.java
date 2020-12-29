@@ -25,6 +25,7 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * REST controller used to handle all authentication actions.
@@ -64,8 +65,11 @@ public class AuthenticationController {
         }
         String sessionKey = AuthenticationService.issueSession(username);
         try {
-            String cookieHostname = httpHeaders.getRequestHeader("host").get(0)
-                    .substring(0, httpHeaders.getRequestHeader("host").get(0).lastIndexOf(':'));
+            String cookieHostname = httpHeaders.getRequestHeader("host").get(0);
+            // Remove port from host header
+            final Pattern portPattern = Pattern.compile(":[0-9]+");
+            cookieHostname = portPattern.matcher(cookieHostname).replaceAll("");
+
             return Response
                     .ok()
                     .entity(H2Helper.getApiUserDao().getByAttributeMatch("username", username))
@@ -88,10 +92,14 @@ public class AuthenticationController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response logout(@CookieParam("cdsess") Cookie sessionCookie) {
         if (sessionCookie != null) AuthenticationService.invalidateSession(sessionCookie.getValue());
+        String cookieHostname = httpHeaders.getRequestHeader("host").get(0);
+        // Remove port from host header
+        final Pattern portPattern = Pattern.compile(":[0-9]+");
+        cookieHostname = portPattern.matcher(cookieHostname).replaceAll("");
         return Response
                 .ok()
                 .entity("[]")
-                .cookie(new NewCookie(new Cookie("cdsess", "", "/", httpHeaders.getRequestHeader("host").get(0).substring(0, httpHeaders.getRequestHeader("host").get(0).lastIndexOf(':')))))
+                .cookie(new NewCookie(new Cookie("cdsess", "", "/", cookieHostname)))
                 .build();
     }
 
