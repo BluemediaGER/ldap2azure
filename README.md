@@ -75,8 +75,7 @@ Below is an example configuration that synchronizes users from an Samba 4 Active
     ]
   },
   "web": {
-    "featureEnabled": false,
-    "port": 8080
+    "featureEnabled": false
   }
 }
 ```  
@@ -93,7 +92,7 @@ The "general" section contains all parameters that are not directly required for
 
 ### The "msGraph" section
 The "msGraph" section contains all information required to connect to the Microsoft Graph API. The application under which ldap2azure runs must be a daemon application and have the Microsoft Graph permission 
-"Directory.ReadWrite.All" and "User.ReadWrite.All".  
+```Directory.ReadWrite.All``` and ```User.ReadWrite.All```.  
 More about the creation of a Microsoft Graph daemon application can be found [here](https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-daemon-app-registration).  
 
 | Key | Description | Example Value |
@@ -152,15 +151,29 @@ ldap2azure offers the possibility to automatically assign a license to new users
 ldap2azure is equipped with a RESTful API and the possibility to provide a web frontend.  
 Once the feature is enabled, ldap2azure will create a default api user the first time it is started. The credentials are displayed in the console or log.
 
-To provide a frontend, it must be located in a folder called "web-frontend" in the same folder as the JAR file of ldap2azure. The "web-frontend" folder must also contain at least an index.html file. If this is the case, it is automatically mounted at application startup.
+To provide a frontend, it must be located in a folder called ```web-frontend``` in the same folder as the JAR file of ldap2azure. The ```web-frontend``` folder must also contain at least an ```index.html``` file. If this is the case, it is automatically mounted at application startup.
 
 My personal implementation of a frontend can be found on my GitHub account: [ldap2azure-frontend](https://github.com/BluemediaGER/ldap2azure-frontend)  
-The definition of the RESTful API is available at [https://bluemediager.github.io/ldap2azure](https://bluemediager.github.io/ldap2azure).
+The documentation of the RESTful API is available [here](https://bluemediager.github.io/ldap2azure).
 
-| Key | Description | Example value |
-|:----|:------------| :-------------|
-| featureEnabled | Can be set true to enable the function or false to disable it | true |
-| port | Sets the port under which the API and the management interface can be reached | 8080 |
+| Key | Description | Default value | Example value |
+|:----|:------------| :-------------| :-------------|
+| featureEnabled | Can be set true to enable the function or false to disable it | false | true |
+| httpPort | (Optional) Sets the port under which the API and the management interface can be reached via HTTP | 8080 | 80 |
+| httpsPort | (Optional) Sets the port under which the API and the management interface can be reached via HTTPs | 8443 | 443 |
+| keystorePassword | (Optional) Password for the Java keystore that holds the HTTPs certificate | changeit | SomePassword1234 |
+| redirectHttp | (Optional) Set if HTTP requests should be redirected to HTTPs instead | true | false|
+
+### HTTPs for API and frontend
+
+If you want to provide HTTPs, you need to create a Java keystore named ```ldap2azure.jks``` in the same folder as the JAR file of ldap2azure.  
+If you have a certificate in PEM format, the keystore can be created as follows:
+
+```bash
+openssl pkcs12 -export -in cert.pem -inkey privkey.pem -out ldap2azure.pkcs12
+keytool -importkeystore -destkeystore ldap2azure.jks -srckeystore ldap2azure.pkcs12 -srcstoretype PKCS12
+```
+If you use a different password for the keystore than the default "changeit", you have to set it via the ```keystorePassword``` entry in the "webConfig" section.
 
 ## Logging
 By default, logs are stored in the "log" subdirectory of the directory you are running ldap2azure from. The log files are automatically rotated every 24 hours and archived as .gz files. All logs older than 30 days are automatically deleted.

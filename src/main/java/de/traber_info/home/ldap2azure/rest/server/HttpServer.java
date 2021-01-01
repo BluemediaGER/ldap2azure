@@ -3,10 +3,14 @@ package de.traber_info.home.ldap2azure.rest.server;
 import de.traber_info.home.ldap2azure.model.config.WebConfig;
 import de.traber_info.home.ldap2azure.rest.RestApplication;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
-import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.SecuredRedirectHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +41,38 @@ public class HttpServer {
         WebConfig config = ConfigUtil.getConfig().getWebConfig();
 
         // Create embedded Jetty server
-        jetty = new Server(config.getPort());
+        jetty = new Server();
 
+        HandlerList handlerList = new HandlerList();
+
+        LOG.info("Management web server will be serving HTTP requests on port {}", config.getHttpPort());
+
+        // Create HttpConfiguration for HTTP
+        HttpConfiguration httpConfiguration = new HttpConfiguration();
+        httpConfiguration.setSecureScheme("https");
+        httpConfiguration.setSecurePort(config.getHttpsPort());
+
+        // Create ServerConnector for HTTP
+        ServerConnector http = new ServerConnector(jetty, new HttpConnectionFactory(httpConfiguration));
+        http.setPort(config.getHttpPort());
+        jetty.addConnector(http);
+
+        // Activate HTTPs if ldap2azure.jks exists in the jarpath
+        String keystoreFile = ConfigUtil.getJarPath() + "/ldap2azure.jks";
+        Path keystorePath = Paths.get(keystoreFile);
+        if (Files.exists(keystorePath)) {
+            LOG.info("Keystore found. Management will also be available via HTTPs on port {}", config.getHttpsPort());
+            initHttps(config, keystoreFile, httpConfiguration);
+
+            // Redirect HTTP requests to HTTPs if enabled in config
+            if (config.shouldRedirectHttp()) {
+                LOG.info("HTTP requests will automatically be redirected to HTTPs");
+                SecuredRedirectHandler securedHandler = new SecuredRedirectHandler();
+                handlerList.addHandler(securedHandler);
+            }
+        }
+
+        // Create ServletContextHandler to combine multiple servlets
         ServletContextHandler srvCtxHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         srvCtxHandler.setContextPath("/*");
 
@@ -46,10 +80,11 @@ public class HttpServer {
         ServletHolder jerseyServlet = new ServletHolder(new ServletContainer(new RestApplication()));
         srvCtxHandler.addServlet(jerseyServlet, "/api/*");
 
+        //
         String frontendDirectory = ConfigUtil.getJarPath() + "/web-frontend";
         Path frontendPath = Paths.get(frontendDirectory);
         if (Files.isDirectory(frontendPath)) {
-            LOG.info("Frontend folder found. Serving static content under web-root.");
+            LOG.info("Frontend folder found. Serving static content under web-root");
             // Lastly, the default servlet for static root content.
             // It is important that this is last.
             ServletHolder holderHome = new ServletHolder("default", DefaultServlet.class);
@@ -60,16 +95,41 @@ public class HttpServer {
             srvCtxHandler.addServlet(holderHome,"/*");
         }
 
-        jetty.setHandler(srvCtxHandler);
+        handlerList.addHandler(srvCtxHandler);
+
+        jetty.setHandler(handlerList);
 
         // Start the server thread
         try {
             jetty.start();
-            LOG.info("Management interface and rest api successfully started on port {}",
-                    config.getPort());
+            LOG.info("Management web server started successfully");
         } catch (Exception ex) {
             LOG.error("An unexpected error occurred", ex);
         }
+    }
+
+    /**
+     * Enable HTTPs on Jetty using the given keystore.
+     * @param config Config to get the keystore password.
+     * @param keystoreFile Path to the keystore file.
+     * @param httpConfiguration HttpConfiguration used as a base for the HTTPs configuration.
+     */
+    private static void initHttps(WebConfig config, String keystoreFile, HttpConfiguration httpConfiguration) {
+        // Create SslContextFactory for HTTPs requests
+        SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+        sslContextFactory.setKeyStorePath(keystoreFile);
+        sslContextFactory.setKeyStorePassword(config.getKeystorePassword());
+
+        // Create HttpConfiguration for HTTPs
+        HttpConfiguration httpsConfiguration = new HttpConfiguration(httpConfiguration);
+        httpsConfiguration.addCustomizer(new SecureRequestCustomizer());
+
+        // Create ServerConnector for HTTPs
+        ServerConnector httpsConnector = new ServerConnector(jetty,
+                new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
+                new HttpConnectionFactory(httpsConfiguration));
+        httpsConnector.setPort(config.getHttpsPort());
+        jetty.addConnector(httpsConnector);
     }
 
     /**
