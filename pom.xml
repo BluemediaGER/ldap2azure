@@ -16,7 +16,7 @@
 
         <jersey.target.version>2.32</jersey.target.version>
         <jetty.target.version>9.4.35.v20201120</jetty.target.version>
-        <jackson.target.version>2.12.0</jackson.target.version>
+        <jackson.target.version>2.12.1</jackson.target.version>
     </properties>
 
     <dependencies>
