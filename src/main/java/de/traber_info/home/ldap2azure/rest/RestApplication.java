@@ -3,17 +3,18 @@ package de.traber_info.home.ldap2azure.rest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import de.traber_info.home.ldap2azure.h2.H2Helper;
 import de.traber_info.home.ldap2azure.rest.model.object.ApiUser;
 import de.traber_info.home.ldap2azure.rest.model.types.Permission;
+import de.traber_info.home.ldap2azure.rest.provider.ObjectMapperProvider;
 import de.traber_info.home.ldap2azure.util.RandomString;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.ApplicationPath;
+import jakarta.ws.rs.ApplicationPath;
 import java.security.SecureRandom;
 import java.util.Locale;
 
@@ -42,12 +43,8 @@ public class RestApplication extends ResourceConfig {
         LOG.info("Components registered successfully");
         LOG.info("Registering features and providers...");
         register(MultiPartFeature.class);
-        JacksonJaxbJsonProvider jsonProvider = new JacksonJaxbJsonProvider();
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        jsonProvider.setMapper(objectMapper);
-        register(jsonProvider);
+        register(ObjectMapperProvider.class);
+        register(JacksonFeature.class);
         LOG.info("Features and providers registered successfully");
 
         // Create the default api user if no users exist in the database
