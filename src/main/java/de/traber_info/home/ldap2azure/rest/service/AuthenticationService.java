@@ -9,8 +9,8 @@ import de.traber_info.home.ldap2azure.rest.model.object.ApiUser;
 import de.traber_info.home.ldap2azure.rest.model.request.ApiKeyCreateRequest;
 import de.traber_info.home.ldap2azure.rest.model.request.ApiUserCreateRequest;
 
-import javax.ws.rs.core.Cookie;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Cookie;
+import jakarta.ws.rs.core.Response;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 

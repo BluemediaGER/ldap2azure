@@ -2,7 +2,7 @@ package de.traber_info.home.ldap2azure.rest.anotation;
 
 import de.traber_info.home.ldap2azure.rest.model.types.Permission;
 
-import javax.ws.rs.NameBinding;
+import jakarta.ws.rs.NameBinding;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
