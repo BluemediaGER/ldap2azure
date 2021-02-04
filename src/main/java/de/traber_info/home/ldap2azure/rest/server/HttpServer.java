@@ -139,7 +139,7 @@ public class HttpServer {
         try {
             jetty.stop();
         } catch (Exception ex) {
-            LOG.error("An unexpected error occurred", ex);
+            // fail silently
         }
     }
 
