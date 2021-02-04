@@ -1,5 +1,6 @@
 package de.traber_info.home.ldap2azure.model.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 
@@ -8,15 +9,16 @@ import de.traber_info.home.ldap2azure.util.ConfigUtil;
  *
  * @author Oliver Traber
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GeneralConfig {
 
     /** Cron expression representing the schedule at which syncs are run */
-    @JsonProperty("syncCronExpression")
+    @JsonProperty(value = "syncCronExpression", required = true)
     private String cronExpression;
 
     /** Boolean representing if debugging functionalities should be enabled */
     @JsonProperty("debuggingEnabled")
-    private boolean debuggingEnabled;
+    private boolean debuggingEnabled = false;
 
     /** Optional jdbc url for use with other databases like mysql */
     @JsonProperty("databaseJDBCUrl")

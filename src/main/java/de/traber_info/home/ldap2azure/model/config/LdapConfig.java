@@ -1,5 +1,6 @@
 package de.traber_info.home.ldap2azure.model.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
@@ -9,37 +10,38 @@ import java.util.List;
  *
  * @author Oliver Traber
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LdapConfig {
 
     /** URL that specifies to which LDAP server ldap2azure should connect to */
-    @JsonProperty("ldapUrl")
+    @JsonProperty(value = "ldapUrl", required = true)
     private String ldapUrl;
 
     /** Username which is used to bind to the LDAP server. In most cases this is the DN of the user. */
-    @JsonProperty("ldapBindUser")
+    @JsonProperty(value = "ldapBindUser", required = true)
     private String bindUser;
 
     /** Password of the user which is used to bind to the LDAP server */
-    @JsonProperty("ldapBindPassword")
+    @JsonProperty(value = "ldapBindPassword", required = true)
     private String bindPassword;
 
     /** Base DN where users are searched in */
-    @JsonProperty("ldapSearchBase")
+    @JsonProperty(value = "ldapSearchBase", required = true)
     private String searchBase;
 
     /** LDAP filter which is used to determine which users should be synced */
-    @JsonProperty("ldapSearchFilter")
+    @JsonProperty(value = "ldapSearchFilter", required = true)
     private String searchFilter;
 
     /** Attributes which should be read from the LDAP directory.
      * These can be used in user build pattern to build the user object.
      */
-    @JsonProperty("ldapAttributes")
+    @JsonProperty(value = "ldapAttributes", required = true)
     private List<LdapAttribute> ldapAttributes;
 
     /** Boolean representing if SSL certificate errors should be ignored while connection to the LDAP server */
     @JsonProperty("ignoreSSLErrors")
-    private boolean ignoreSSLErrors;
+    private boolean ignoreSSLErrors = false;
 
     /**
      * Get the URL that specifies to which LDAP server ldap2azure should connect to

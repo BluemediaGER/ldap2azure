@@ -12,8 +12,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class WebConfig {
 
     /** Boolean representing if the web management and REST API should be enabled */
-    @JsonProperty(value = "featureEnabled", defaultValue = "false")
-    private boolean enabled;
+    @JsonProperty(value = "featureEnabled")
+    private boolean enabled = false;
 
     /** Port for HTTP on which the web application server should be listening */
     @JsonProperty(value = "httpPort")
@@ -24,8 +24,8 @@ public class WebConfig {
     private int httpsPort = 8443;
 
     /** Password for the keystore file if HTTPs should be enabled */
-    @JsonProperty(value = "keystorePassword", defaultValue = "changeit")
-    private String keystorePassword;
+    @JsonProperty(value = "keystorePassword")
+    private String keystorePassword = "changeit";
 
     /** Boolean to set if HTTP requests should be redirected to HTTPs */
     @JsonProperty(value = "redirectHttp")

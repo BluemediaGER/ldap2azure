@@ -1,5 +1,6 @@
 package de.traber_info.home.ldap2azure.model.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -7,14 +8,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @author Oliver Traber
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LdapAttribute {
 
     /** Name of the ldap attribute that should be loaded */
-    @JsonProperty("attributeName")
+    @JsonProperty(value = "attributeName", required = true)
     private String attributeName;
 
     /** Boolean representing if the property is an binary attribute */
-    @JsonProperty("binary")
+    @JsonProperty(value = "binary", required = true)
     private boolean isBinary;
 
     /**
