@@ -4,10 +4,10 @@ import de.traber_info.home.ldap2azure.rest.model.response.GenericError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -35,7 +35,7 @@ public class GenericExceptionMapper implements ExceptionMapper<Exception> {
         LOG.error("An unexpected error occurred", ex);
         GenericError error = new GenericError();
         error.error = "internal_error";
-        error.message = sw.toString();
+        error.message = ex.getMessage();
         return Response
                 .status(500)
                 .type(MediaType.APPLICATION_JSON)

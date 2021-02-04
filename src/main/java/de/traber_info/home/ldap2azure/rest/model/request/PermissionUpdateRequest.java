@@ -3,7 +3,7 @@ package de.traber_info.home.ldap2azure.rest.model.request;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.traber_info.home.ldap2azure.rest.model.types.Permission;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Request model used to change the permission of an existing

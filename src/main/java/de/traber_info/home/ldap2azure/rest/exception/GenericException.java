@@ -2,9 +2,9 @@ package de.traber_info.home.ldap2azure.rest.exception;
 
 import de.traber_info.home.ldap2azure.rest.model.response.GenericError;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Generic Exception for cases where an human readable message should be included.
