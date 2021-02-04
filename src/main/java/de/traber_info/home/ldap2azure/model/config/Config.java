@@ -1,5 +1,6 @@
 package de.traber_info.home.ldap2azure.model.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -7,31 +8,32 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @author Oliver Traber
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Config {
 
     /** Configuration file section used to configure general settings like e.g. the sync schedule */
-    @JsonProperty("general")
+    @JsonProperty(value = "general", required = true)
     private GeneralConfig generalConfig;
 
     /** Configuration file section used to configure the Microsoft Graph API client */
-    @JsonProperty("msGraph")
+    @JsonProperty(value = "msGraph", required = true)
     private GraphClientConfig graphClientConfig;
 
     /** Configuration file section used to configure LDAP connectivity */
-    @JsonProperty("ldap")
+    @JsonProperty(value = "ldap", required = true)
     private LdapConfig ldapConfig;
 
     /** Configuration file section used to define patterns for building user objects */
-    @JsonProperty("userBuildPattern")
+    @JsonProperty(value = "userBuildPattern", required = true)
     private PatternConfig patternConfig;
 
     /** Configuration file section used to configure the auto licensing feature */
     @JsonProperty("autoLicensing")
-    private AutoLicensingConfig autoLicensingConfig;
+    private AutoLicensingConfig autoLicensingConfig = new AutoLicensingConfig();
 
     /** Configuration file section used to configure the web management interface and the REST API */
     @JsonProperty("web")
-    private WebConfig webConfig;
+    private WebConfig webConfig = new WebConfig();
 
     /**
      * Get the general section of the config file.

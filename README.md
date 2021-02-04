@@ -20,15 +20,15 @@ Below is an example configuration that synchronizes users from an Samba 4 Active
 ```json
 {
   "general": {
-    "syncCronExpression": "0 0/30 * ? * * *",
-    "debuggingEnabled": false
+    "syncCronExpression": "0 0/30 * ? * * *"
   },
   "msGraph": {
-    "msGraphTenantSpecificAuthority": "https://login.microsoftonline.com/<your-tenant-id-here>/",
+    "msGraphTenantId": "<your-tenant-id-here>",
+    "msGraphNationalCloud": "Germany",
     "msGraphClientId": "<your-client-id-here>",
     "msGraphClientSecret": "<your-client-secret-here>",
     "usageLocation": "DE",
-    "deleteBehavior": "SOFT"
+    "deleteBehavior": "HARD"
   },
   "ldap": {
     "ldapUrl": "ldaps://dc1.example.com",
@@ -75,7 +75,8 @@ Below is an example configuration that synchronizes users from an Samba 4 Active
     ]
   },
   "web": {
-    "featureEnabled": false
+    "featureEnabled": true,
+    "keystorePassword": "SomePassword1234"
   }
 }
 ```  
@@ -84,39 +85,40 @@ All sections of the config file are explained in detail below.
 ### The "general" section
 The "general" section contains all parameters that are not directly required for querying, processing and changing data.
 
-| Key | Descripction | Example Value |
-|:----|:-------------|:--------------|
-| syncCronExpression | Cron expression, when the SyncJob should be executed | 0 0/30 * ? * * * |
-| debuggingEnabled | If true enables an integrated H2 console on port 8082 to debug the internal database | false |
-| databaseJDBCUrl | (optional) JDBC url for the use of an external database such as MySQL. If not set the internal H2 database is used. | mysql://user:password@localhost/ldap2azure?useSSL=false
+| Key | Description | Default value | Example value |
+|:----|:------------| :-------------| :-------------|
+| syncCronExpression | Cron expression, when the SyncJob should be executed | none | 0 0/30 * ? * * * |
+| debuggingEnabled | (Optional) If true enables an integrated H2 console on port 8082 to debug the internal database | false | true |
+| databaseJDBCUrl | (Optional) JDBC url for the use of an external database such as MySQL. If not set the internal H2 database is used. | Internal H2 database | mysql://user:password@localhost/ldap2azure?useSSL=false |
 
 ### The "msGraph" section
 The "msGraph" section contains all information required to connect to the Microsoft Graph API. The application under which ldap2azure runs must be a daemon application and have the Microsoft Graph permission 
 ```Directory.ReadWrite.All``` and ```User.ReadWrite.All```.  
 More about the creation of a Microsoft Graph daemon application can be found [here](https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-daemon-app-registration).  
 
-| Key | Description | Example Value |
-|:----|:------------|:--------------|
-| msGraphTenantSpecificAuthority | Tenant specific OAuth 2.0 endpoint against which the application authenticates | https://login.microsoftonline.com/7a53db06-b010-4aef-ba79-337d9d2f29bb/ |
-| msGraphClientId | ID of the Microsoft Graph Application that should be used | 641e2b36-0bde-46af-b896-545532c0ba03 |
-| msGraphClientSecret | Secret, which was generated for the application in Azure AD | Vo:MfG.AHK[eIwO?QhpdQ5mz0p8cG3L- |
-| usageLocation | Two character location code of the country new user accounts will be used in | DE |
-| deleteBehavior | If set to HARD, users will be deleted completely if they are removed from the source ldap. If set to SOFT they will be moved to the recycling bin instead and will be deleted by Azure AD after 30 days | HARD |
+| Key | Description | Default value | Example value |
+|:----|:------------| :-------------| :-------------|
+| msGraphTenantId | ID of the Azure AD tenant, ldap2azure connects to. Used for authentication. | none | 7a53db06-b010-4aef-ba79-337d9d2f29bb |
+| msGraphNationalCloud | (Optional) Cloud environment your Azure AD tenant is hosted in | Global | China, Germany, Global or UsGovernment |
+| msGraphClientId | ID of the Microsoft Graph Application that should be used | none | 641e2b36-0bde-46af-b896-545532c0ba03 |
+| msGraphClientSecret | Secret, which was generated for the application in Azure AD | none | Vo:MfG.AHK[eIwO?QhpdQ5mz0p8cG3L- |
+| usageLocation | Two character location code of the country new user accounts will be used in | none | DE |
+| deleteBehavior | (Optional) If set to HARD, users will be deleted completely if they are removed from the source ldap. If set to SOFT they will be moved to the recycling bin instead and will be deleted by Azure AD after 30 days | SOFT | HARD |
 
 ### The "ldap" section
 The "ldap" section contains all information on how and which data is retrieved from the source LDAP.  
 If an LDAPS connection is used and the server only uses a self-signed certificate, this certificate must be added to the default Java Keystore for the connection to work correctly.
 Alternatively, any certificate can be accepted in test environments. However, it is strongly recommended not to do this in production environments.  
 
-| Key | Description | Example value |
-|:----|:------------|:--------------|
-| ldapUrl | Connection string used to connect to the source LDAP server | ldaps://dc1.example.com |
-| ldapBindUser | Identity that is used to bind to the source LDAP server | CN=ServiceUser,CN=Users,DC=example,DC=com |
-| ldapBindPassword | Password used to authenticate as the bind user | SomeSecurePassword1234 |
-| ldapSearchBase | DN of the base container in which the users to be synchronized are located | CN=Users,DC=example,DC=com |
-| ldapSearchFilter | LDAP filter to narrow down the objects to be synchronized | (&(objectClass=user)(memberof=CN=AzureSyncUser,CN=Groups,DC=example,DC=com)) |
-| ignoreSSLErrors | If true, certificate errors are ignored for LDAPS connections | false |
-| ldapAttributes | Array containing the LDAP attributes to be loaded, which can later be used in the pattern configuration | see below |
+| Key | Description | Default value | Example value |
+|:----|:------------| :-------------| :-------------|
+| ldapUrl | Connection string used to connect to the source LDAP server | none | ldaps://dc1.example.com |
+| ldapBindUser | Identity that is used to bind to the source LDAP server | none | CN=ServiceUser,CN=Users,DC=example,DC=com |
+| ldapBindPassword | Password used to authenticate as the bind user | none | SomeSecurePassword1234 |
+| ldapSearchBase | DN of the base container in which the users to be synchronized are located | none | CN=Users,DC=example,DC=com |
+| ldapSearchFilter | LDAP filter to narrow down the objects to be synchronized | none | (&(objectClass=user)(memberof=CN=AzureSyncUser,CN=Groups,DC=example,DC=com)) |
+| ignoreSSLErrors | (Optional) If true, certificate errors are ignored for LDAPS connections | false | true |
+| ldapAttributes | Array containing the LDAP attributes to be loaded, which can later be used in the pattern configuration | none | see below |
 
 #### Ldap attribute
 Defines an attribute in the source LDAP, which can later be used in the pattern configuration.
@@ -142,10 +144,10 @@ An exemplary configuration which uses placeholders combined with fixed values is
 ### The "autoLicensing" section
 ldap2azure offers the possibility to automatically assign a license to new users that are being synchronized. This feature is optional, but recommended for an automated workflow.  
 
-| Key | Description | Example value |
-|:----|:------------| :-------------|
-| featureEnabled | Can be set true to enable the function or false to disable it | true |
-| defaultLicenseSkuIDs | Array of GUIDs of the licenses to be used by default. More can be read [here](https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/licensing-service-plan-reference) | ["05e9a617-0261-4cee-bb44-138d3ef5d965"] |
+| Key | Description | Default value | Example value |
+|:----|:------------| :-------------| :-------------|
+| featureEnabled | (Optional) Can be set true to enable the function or false to disable it | false | true |
+| defaultLicenseSkuIDs | (Optional) Array of GUIDs of the licenses to be used by default. More can be read [here](https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/licensing-service-plan-reference) | Empty array | ["05e9a617-0261-4cee-bb44-138d3ef5d965"] |
 
 ### The "web" section
 ldap2azure is equipped with a RESTful API and the possibility to provide a web frontend.  
@@ -158,7 +160,7 @@ The documentation of the RESTful API is available [here](https://bluemediager.gi
 
 | Key | Description | Default value | Example value |
 |:----|:------------| :-------------| :-------------|
-| featureEnabled | Can be set true to enable the function or false to disable it | false | true |
+| featureEnabled | (Optional) Can be set true to enable the function or false to disable it | false | true |
 | httpPort | (Optional) Sets the port under which the API and the management interface can be reached via HTTP | 8080 | 80 |
 | httpsPort | (Optional) Sets the port under which the API and the management interface can be reached via HTTPs | 8443 | 443 |
 | keystorePassword | (Optional) Password for the Java keystore that holds the HTTPs certificate | changeit | SomePassword1234 |
