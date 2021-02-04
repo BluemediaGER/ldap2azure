@@ -22,8 +22,9 @@ import de.traber_info.home.ldap2azure.rest.exception.NotFoundException;
 import de.traber_info.home.ldap2azure.rest.model.types.ConflictResolveStrategy;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 import de.traber_info.home.ldap2azure.util.RandomString;
+import jakarta.ws.rs.core.Response;
 
-import javax.ws.rs.core.Response;
+// import jakarta.ws.rs.core.Response;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;

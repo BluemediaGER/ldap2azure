@@ -12,11 +12,11 @@ import de.traber_info.home.ldap2azure.rest.model.request.ConflictResolveRequest;
 import de.traber_info.home.ldap2azure.rest.model.types.Permission;
 import de.traber_info.home.ldap2azure.rest.service.UserService;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.sql.SQLException;
 import java.util.List;
 

@@ -3,8 +3,8 @@ package de.traber_info.home.ldap2azure.rest.model.request;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.traber_info.home.ldap2azure.rest.model.types.Permission;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * RequestModel used to create an new {@link de.traber_info.home.ldap2azure.rest.model.object.ApiUser}.

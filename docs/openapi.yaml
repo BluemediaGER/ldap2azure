@@ -252,7 +252,7 @@ paths:
       tags:
         - auth
       summary: Get the secret for the given ApiKey from the database.
-      description: This returns the secret you have to use in the `Authorization` Header to authenticate a backend application.
+      description: This returns the secret you have to use in the `X-API-Key` Header to authenticate a backend application.
       operationId: authGetApiKeySecret
       parameters:
         - name: id

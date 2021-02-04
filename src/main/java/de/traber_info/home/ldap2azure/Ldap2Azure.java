@@ -53,8 +53,8 @@ public class Ldap2Azure {
 
         // Initialize GraphClientUtil
         GraphClientConfig graphClientConfig = ConfigUtil.getConfig().getGraphClientConfig();
-        GraphClientUtil.init(graphClientConfig.getTenantSpecificAuthority(), graphClientConfig.getClientId(),
-                graphClientConfig.getClientSecret());
+        GraphClientUtil.init(graphClientConfig.getTenantId(), graphClientConfig.getClientId(),
+                graphClientConfig.getClientSecret(), graphClientConfig.getNationalCloud());
 
         // Initialize the http management server when enabled in the config file
         if (ConfigUtil.getConfig().getWebConfig().isEnabled()) HttpServer.start();

@@ -8,10 +8,10 @@ import de.traber_info.home.ldap2azure.rest.anotation.CheckAuth;
 import de.traber_info.home.ldap2azure.rest.exception.GenericException;
 import de.traber_info.home.ldap2azure.rest.exception.NotFoundException;
 
-import javax.validation.constraints.NotEmpty;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.sql.SQLException;
 import java.util.List;
 
