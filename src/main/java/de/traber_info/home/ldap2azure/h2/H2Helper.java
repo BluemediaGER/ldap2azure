@@ -2,6 +2,7 @@ package de.traber_info.home.ldap2azure.h2;
 
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import de.traber_info.home.ldap2azure.h2.dao.*;
@@ -29,7 +30,7 @@ public class H2Helper {
     private static final Logger LOG = LoggerFactory.getLogger(H2Helper.class.getName());
 
     /** Connection source for the persistent database */
-    private static ConnectionSource persistentConnectionSource;
+    private static JdbcPooledConnectionSource persistentConnectionSource;
 
     /** Connection source for the in memory database */
     private static ConnectionSource inMemoryConnectionSource;
@@ -56,7 +57,9 @@ public class H2Helper {
     public static void init(boolean enableDebuggingConsole) {
         try {
             String persistenceJDBCUrl = ConfigUtil.getConfig().getGeneralConfig().getDatabaseJDBCUrl();
-            persistentConnectionSource = new JdbcConnectionSource(persistenceJDBCUrl);
+            persistentConnectionSource = new JdbcPooledConnectionSource(persistenceJDBCUrl);
+            persistentConnectionSource.setMaxConnectionAgeMillis(5 * 60 * 1000);
+            persistentConnectionSource.setTestBeforeGet(true);
 
             inMemoryConnectionSource = new JdbcConnectionSource("jdbc:h2:mem:cache");
 
