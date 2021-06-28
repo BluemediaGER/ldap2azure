@@ -15,7 +15,7 @@
         <maven.compiler.target>11</maven.compiler.target>
 
         <jersey.target.version>3.0.2</jersey.target.version>
-        <jetty.target.version>11.0.4</jetty.target.version>
+        <jetty.target.version>11.0.5</jetty.target.version>
         <jackson.target.version>2.12.3</jackson.target.version>
     </properties>
 
