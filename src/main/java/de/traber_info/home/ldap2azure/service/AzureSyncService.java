@@ -2,9 +2,10 @@ package de.traber_info.home.ldap2azure.service;
 
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.microsoft.graph.core.ClientException;
-import com.microsoft.graph.models.extensions.AssignedLicense;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.PasswordProfile;
+import com.microsoft.graph.models.AssignedLicense;
+import com.microsoft.graph.models.PasswordProfile;
+import com.microsoft.graph.models.UserAssignLicenseParameterSet;
+import com.microsoft.graph.requests.GraphServiceClient;
 import de.traber_info.home.ldap2azure.h2.H2Helper;
 import de.traber_info.home.ldap2azure.h2.dao.UserDAOImpl;
 import de.traber_info.home.ldap2azure.model.object.Sync;
@@ -12,6 +13,7 @@ import de.traber_info.home.ldap2azure.model.object.User;
 import de.traber_info.home.ldap2azure.model.type.ChangeState;
 import de.traber_info.home.ldap2azure.model.type.DeleteBehavior;
 import de.traber_info.home.ldap2azure.model.type.SyncState;
+import de.traber_info.home.ldap2azure.msgraph.CustomGraphLogger;
 import de.traber_info.home.ldap2azure.util.ConfigUtil;
 import de.traber_info.home.ldap2azure.msgraph.GraphClientUtil;
 import de.traber_info.home.ldap2azure.util.RandomString;
@@ -47,16 +49,16 @@ public class AzureSyncService {
     private long usersFailing = 0L;
 
     /** Instance of the UserDAO used to access the database */
-    private UserDAOImpl userDAO = H2Helper.getUserDao();
+    private final UserDAOImpl userDAO = H2Helper.getUserDao();
 
     /** Instance of the GraphServiceClient used to make changed in Azure AD */
-    private IGraphServiceClient msGraphServiceClient = GraphClientUtil.getGraphServiceClient();
+    private final GraphServiceClient msGraphServiceClient = GraphClientUtil.getGraphServiceClient();
 
     /**
      * Run an sync with Azure AD.
      */
     public void run() throws SQLException {
-        LOG.info("Beginning sync to Azure AD..");
+        LOG.info("Beginning sync to Azure AD...");
 
         String syncId = UUID.randomUUID().toString();
         LocalDateTime syncBegin = LocalDateTime.now();
@@ -103,10 +105,10 @@ public class AzureSyncService {
         for (User user : newUsers) {
             user.setLastSyncId(syncId);
             LOG.trace("Creating user {} in Azure AD...", user.getDisplayName());
-            com.microsoft.graph.models.extensions.User azureUser = user.toAzureUser();
+            com.microsoft.graph.models.User azureUser = user.toAzureUser();
 
             /* Create random 24 character long password.
-               Since this tool is intended to be used in combination with an single sign-on service like Keycloak,
+               Since this tool is intended to be used in combination with a single sign-on service like Keycloak,
                the value of the password is more or less irrelevant, since it will never be used by the user. */
             PasswordProfile passwordProfile = new PasswordProfile();
             passwordProfile.forceChangePasswordNextSignIn = false;
@@ -120,6 +122,8 @@ public class AzureSyncService {
 
             String id;
             try {
+                // Temporarily disable logging to prevent expected errors spamming the logfile
+                ((CustomGraphLogger) msGraphServiceClient.getLogger()).setLogActive(false);
                 id = msGraphServiceClient.users().buildRequest().post(azureUser).id;
             } catch (ClientException ex) {
                 user.setSyncState(SyncState.FAILED);
@@ -127,16 +131,24 @@ public class AzureSyncService {
                         "This user probably already exists in Azure AD, but not in the local database. " +
                         "If deleteBehavior SOFT is configured, " +
                         "the user may still exist in the \"Deleted Users\" section of your Azure AD Console. " +
-                        "The user was marked in the database.", user.getDisplayName(), user.getOnPremisesImmutableId());
+                        "The user was marked as failed in the database.",
+                        user.getDisplayName(), user.getOnPremisesImmutableId());
                 userDAO.update(user);
                 usersFailing++;
                 continue;
+            } finally {
+                ((CustomGraphLogger) msGraphServiceClient.getLogger()).setLogActive(true);
             }
 
             // Assign default licenses to user
             if (ConfigUtil.getConfig().getAutoLicencingConfig().isEnabled()) {
                 LOG.trace("Assigning default licenses to user {}...", user.getDisplayName());
-                msGraphServiceClient.users(id).assignLicense(addLicensesList, removeLicensesList).buildRequest().post();
+
+                UserAssignLicenseParameterSet licenseParameterSet = new UserAssignLicenseParameterSet();
+                licenseParameterSet.addLicenses = addLicensesList;
+                licenseParameterSet.removeLicenses = removeLicensesList;
+
+                msGraphServiceClient.users(id).assignLicense(licenseParameterSet).buildRequest().post();
             }
 
             user.setAzureImmutableId(id);

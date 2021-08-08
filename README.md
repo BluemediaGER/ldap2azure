@@ -24,11 +24,10 @@ Below is an example configuration that synchronizes users from an Samba 4 Active
   },
   "msGraph": {
     "msGraphTenantId": "<your-tenant-id-here>",
-    "msGraphNationalCloud": "Germany",
     "msGraphClientId": "<your-client-id-here>",
     "msGraphClientSecret": "<your-client-secret-here>",
     "usageLocation": "DE",
-    "deleteBehavior": "HARD"
+    "deleteBehavior": "SOFT"
   },
   "ldap": {
     "ldapUrl": "ldaps://dc1.example.com",
@@ -99,7 +98,6 @@ More about the creation of a Microsoft Graph daemon application can be found [he
 | Key | Description | Default value | Example value |
 |:----|:------------| :-------------| :-------------|
 | msGraphTenantId | ID of the Azure AD tenant, ldap2azure connects to. Used for authentication. | none | 7a53db06-b010-4aef-ba79-337d9d2f29bb |
-| msGraphNationalCloud | (Optional) Cloud environment your Azure AD tenant is hosted in | Global | China, Germany, Global or UsGovernment |
 | msGraphClientId | ID of the Microsoft Graph Application that should be used | none | 641e2b36-0bde-46af-b896-545532c0ba03 |
 | msGraphClientSecret | Secret, which was generated for the application in Azure AD | none | Vo:MfG.AHK[eIwO?QhpdQ5mz0p8cG3L- |
 | usageLocation | Two character location code of the country new user accounts will be used in | none | DE |
