@@ -1,9 +1,9 @@
 package de.traber_info.home.ldap2azure.msgraph;
 
-import com.microsoft.graph.auth.confidentialClient.ClientCredentialProvider;
-import com.microsoft.graph.auth.enums.NationalCloud;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
+import com.azure.identity.ClientSecretCredential;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
+import com.microsoft.graph.requests.GraphServiceClient;
 
 import java.util.Collections;
 
@@ -22,7 +22,7 @@ public class GraphClientUtil {
     private final static String GRAPH_DEFAULT_SCOPE = "https://graph.microsoft.com/.default";
 
     /** Instance of the Microsoft Graph service client used for Graph API actions. */
-    private static IGraphServiceClient mGraphServiceClient;
+    private static GraphServiceClient mGraphServiceClient;
 
     /**
      * Initialize the GraphClientUtil.
@@ -30,14 +30,21 @@ public class GraphClientUtil {
      * @param clientId Id of the Azure Application this tool should manipulate the Azure AD with.
      * @param clientSecret Application secret of the Azure Application this tool should manipulate the Azure AD with.
      */
-    public static void init(String tenantId, String clientId, String clientSecret, NationalCloud nationalCloud) {
+    public static void init(String tenantId, String clientId, String clientSecret) {
 
-        ClientCredentialProvider authProvider = new ClientCredentialProvider(
-                clientId, Collections.singletonList(GRAPH_DEFAULT_SCOPE),
-                clientSecret, tenantId, nationalCloud);
+        ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .tenantId(tenantId)
+                .build();
+
+        TokenCredentialAuthProvider tokenCredentialAuthProvider = new TokenCredentialAuthProvider(
+                Collections.singletonList(GRAPH_DEFAULT_SCOPE),
+                clientSecretCredential
+        );
 
         mGraphServiceClient = GraphServiceClient.builder()
-                .authenticationProvider(authProvider)
+                .authenticationProvider(tokenCredentialAuthProvider)
                 .logger(new CustomGraphLogger())
                 .buildClient();
     }
@@ -46,7 +53,7 @@ public class GraphClientUtil {
      * Get an instance of the Microsoft Graph service client.
      * @return Instance of the Microsoft Graph service client, that can be used to perform Graph API calls.
      */
-    public static IGraphServiceClient getGraphServiceClient() {
+    public static GraphServiceClient getGraphServiceClient() {
         return mGraphServiceClient;
     }
 

@@ -1,14 +1,11 @@
 package de.traber_info.home.ldap2azure.rest.service;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.microsoft.graph.http.GraphServiceException;
-import com.microsoft.graph.models.extensions.AssignedLicense;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.PasswordProfile;
-import com.microsoft.graph.options.HeaderOption;
-import com.microsoft.graph.requests.extensions.IDirectoryObjectRestoreRequest;
+import com.microsoft.graph.models.AssignedLicense;
+import com.microsoft.graph.models.PasswordProfile;
+import com.microsoft.graph.models.UserAssignLicenseParameterSet;
+import com.microsoft.graph.requests.GraphServiceClient;
+import com.microsoft.graph.requests.UserCollectionPage;
 import de.traber_info.home.ldap2azure.h2.H2Helper;
 import de.traber_info.home.ldap2azure.h2.dao.UserDAOImpl;
 import de.traber_info.home.ldap2azure.model.object.User;
@@ -24,11 +21,9 @@ import de.traber_info.home.ldap2azure.util.ConfigUtil;
 import de.traber_info.home.ldap2azure.util.RandomString;
 import jakarta.ws.rs.core.Response;
 
-// import jakarta.ws.rs.core.Response;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -45,7 +40,7 @@ public class UserService {
     private static final UserDAOImpl userDAO = H2Helper.getUserDao();
 
     /** Instance of the GraphServiceClient used to make changed in Azure AD */
-    private static final IGraphServiceClient msGraphServiceClient = GraphClientUtil.getGraphServiceClient();
+    private static final GraphServiceClient msGraphServiceClient = GraphClientUtil.getGraphServiceClient();
 
     /**
      * Retry the sync of an failed user.
@@ -66,7 +61,7 @@ public class UserService {
      * @param user {@link User} the creation should be retried for.
      */
     private static void retryCreateUser(User user) {
-        com.microsoft.graph.models.extensions.User azureUser = user.toAzureUser();
+        com.microsoft.graph.models.User azureUser = user.toAzureUser();
 
         PasswordProfile passwordProfile = new PasswordProfile();
         passwordProfile.forceChangePasswordNextSignIn = false;
@@ -98,7 +93,12 @@ public class UserService {
                     addLicensesList.add(license);
                 }
             }
-            msGraphServiceClient.users(id).assignLicense(addLicensesList, removeLicensesList).buildRequest().post();
+
+            UserAssignLicenseParameterSet assignLicenseParameterSet = new UserAssignLicenseParameterSet();
+            assignLicenseParameterSet.addLicenses = addLicensesList;
+            assignLicenseParameterSet.removeLicenses = removeLicensesList;
+
+            msGraphServiceClient.users(id).assignLicense(assignLicenseParameterSet).buildRequest().post();
         }
 
         user.setAzureImmutableId(id);
@@ -117,43 +117,47 @@ public class UserService {
         if (user == null) throw new NotFoundException("user_not_existing");
         if (user.getSyncState() != SyncState.FAILED) throw new BadRequestException("user_not_failed");
 
-        // Prepare OData filter expression to get user conflicts
-        String queryParameters = "?$select=id,displayName,givenName,surname,onPremisesImmutableId,userPrincipalName" +
-                "&$filter=onPremisesImmutableId%20eq%20%27{opid}%27%20or%20userPrincipalName%20eq%20%27{upn}%27";
-        queryParameters = queryParameters.replace("{opid}",
-                URLEncoder.encode(user.getOnPremisesImmutableId(), StandardCharsets.UTF_8));
-        queryParameters = queryParameters.replace("{upn}",
-                URLEncoder.encode(user.getUserPrincipalName(), StandardCharsets.UTF_8));
+        // Prepare OData filter and select expression to get user conflicts
+        String selectExpression = "id,displayName,givenName,surname,onPremisesImmutableId,userPrincipalName";
+        String filterExpression = "onPremisesImmutableId eq '{opid}' or userPrincipalName eq '{upn}'";
+        filterExpression = filterExpression.replace("{opid}",user.getOnPremisesImmutableId());
+        filterExpression = filterExpression.replace("{upn}", user.getUserPrincipalName());
 
-        // Query for deleted users in the trashbin
-        String trashQuery = "/directory/deletedItems/microsoft.graph.user" + queryParameters;
-        JsonObject apiResponse = msGraphServiceClient.customRequest(trashQuery).buildRequest().get();
-        JsonArray userArray = apiResponse.getAsJsonArray("value");
+        UserCollectionPage deletedUsers = msGraphServiceClient
+                .directory()
+                .deletedItemsAsUser()
+                .buildRequest()
+                .select(selectExpression)
+                .filter(filterExpression)
+                .get();
+
         List<User> potentialConflicts = new ArrayList<>();
 
-        for (JsonElement jsonUserElement : userArray) {
-            JsonObject jsonUserObject = jsonUserElement.getAsJsonObject();
-            User deletedUser = new User(null, jsonUserObject.get("onPremisesImmutableId").getAsString(),
-                    jsonUserObject.get("id").getAsString(), jsonUserObject.get("givenName").getAsString(),
-                    jsonUserObject.get("surname").getAsString(),jsonUserObject.get("displayName").getAsString(),
-                    null,jsonUserObject.get("userPrincipalName").getAsString());
-            deletedUser.setChangeState(ChangeState.DELETED);
-            potentialConflicts.add(deletedUser);
+        if (deletedUsers != null) {
+            for (com.microsoft.graph.models.User deletedAzureUser : deletedUsers.getCurrentPage()) {
+                User deletedUser = new User(null, deletedAzureUser.onPremisesImmutableId,
+                        deletedAzureUser.id, deletedAzureUser.givenName, deletedAzureUser.surname,
+                        deletedAzureUser.displayName, null, deletedAzureUser.userPrincipalName);
+                deletedUser.setChangeState(ChangeState.DELETED);
+                potentialConflicts.add(deletedUser);
+            }
         }
 
-        // Query for existing users
-        String normalQuery = "/users" + queryParameters;
-        apiResponse = msGraphServiceClient.customRequest(normalQuery).buildRequest().get();
-        userArray = apiResponse.getAsJsonArray("value");
+        UserCollectionPage existingUsers = msGraphServiceClient
+                .users()
+                .buildRequest()
+                .select(selectExpression)
+                .filter(filterExpression)
+                .get();
 
-        for (JsonElement jsonUserElement : userArray) {
-            JsonObject jsonUserObject = jsonUserElement.getAsJsonObject();
-            User matchedUser = new User(null, jsonUserObject.get("onPremisesImmutableId").getAsString(),
-                    jsonUserObject.get("id").getAsString(), jsonUserObject.get("givenName").getAsString(),
-                    jsonUserObject.get("surname").getAsString(),jsonUserObject.get("displayName").getAsString(),
-                    null,jsonUserObject.get("userPrincipalName").getAsString());
-            matchedUser.setChangeState(ChangeState.UNCHANGED);
-            potentialConflicts.add(matchedUser);
+        if (existingUsers != null) {
+            for (com.microsoft.graph.models.User existingAzureUser : existingUsers.getCurrentPage()) {
+                User matchedUser = new User(null, existingAzureUser.onPremisesImmutableId,
+                        existingAzureUser.id, existingAzureUser.givenName, existingAzureUser.surname,
+                        existingAzureUser.displayName, null, existingAzureUser.userPrincipalName);
+                matchedUser.setChangeState(ChangeState.UNCHANGED);
+                potentialConflicts.add(matchedUser);
+            }
         }
         return potentialConflicts;
     }
@@ -179,13 +183,11 @@ public class UserService {
             // Restore user from trashbin. Temporarily disable logging to prevent intentional errors from being logged.
             try {
                 ((CustomGraphLogger) msGraphServiceClient.getLogger()).setLogActive(false);
-                IDirectoryObjectRestoreRequest request = msGraphServiceClient
-                        .directory()
+                msGraphServiceClient.directory()
                         .deletedItems(azureUserId)
                         .restore()
-                        .buildRequest();
-                request.getHeaders().add(new HeaderOption("Content-Type", "application/json"));
-                request.post();
+                        .buildRequest()
+                        .post();
                 ((CustomGraphLogger) msGraphServiceClient.getLogger()).setLogActive(true);
             } catch (GraphServiceException ex) {
                 // Do nothing. The request fails if the user is not in the trashbin.
@@ -196,7 +198,7 @@ public class UserService {
                 msGraphServiceClient.users(user.getAzureImmutableId()).buildRequest().patch(user.toAzureUser());
             } catch (GraphServiceException ex) {
                 throw new GenericException(Response.Status.INTERNAL_SERVER_ERROR,
-                        "error_from_azure", ex.getServiceError().message);
+                        "error_from_azure", Objects.requireNonNull(ex.getServiceError()).message);
             }
             user.setSyncState(SyncState.OK);
             user.setChangeState(ChangeState.UNCHANGED);
