@@ -1,5 +1,5 @@
 # Build stage
-FROM maven:3.6.0-jdk-11-slim AS build-stage
+FROM maven:3.8.4-jdk-11-slim AS build-stage
 
 COPY ./src /usr/src/ldap2azure/src
 COPY ./pom.xml /usr/src/ldap2azure/pom.xml
