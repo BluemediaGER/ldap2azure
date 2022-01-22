@@ -16,8 +16,8 @@ public class LdapAttribute {
     private String attributeName;
 
     /** Boolean representing if the property is an binary attribute */
-    @JsonProperty(value = "binary", required = true)
-    private boolean isBinary;
+    @JsonProperty(value = "binary")
+    private boolean isBinary = false;
 
     /**
      * Get the name of the ldap attribute that should be loaded.
