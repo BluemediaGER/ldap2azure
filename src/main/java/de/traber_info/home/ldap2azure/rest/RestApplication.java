@@ -1,8 +1,5 @@
 package de.traber_info.home.ldap2azure.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.traber_info.home.ldap2azure.h2.H2Helper;
 import de.traber_info.home.ldap2azure.rest.model.object.ApiUser;
 import de.traber_info.home.ldap2azure.rest.model.types.Permission;

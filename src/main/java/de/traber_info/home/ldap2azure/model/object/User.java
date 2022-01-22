@@ -136,11 +136,11 @@ public class User {
     }
 
     /**
-     * Create a new instance of {@link User} from existing Azure AD {@link com.microsoft.graph.models.extensions.User}.
-     * @param user Existing Azure AD {@link com.microsoft.graph.models.extensions.User} object.
+     * Create a new instance of {@link User} from existing Azure AD {@link com.microsoft.graph.models.User}.
+     * @param user Existing Azure AD {@link com.microsoft.graph.models.User} object.
      * @return New instance of {@link User} containing the same attributes as the Azure AD user model.
      */
-    public static User fromAzureUser(com.microsoft.graph.models.extensions.User user) {
+    public static User fromAzureUser(com.microsoft.graph.models.User user) {
         User dbUser = new User();
         dbUser.id = user.id;
         dbUser.onPremisesImmutableId = user.onPremisesImmutableId;
@@ -322,12 +322,12 @@ public class User {
     }
 
     /**
-     * Convert this instance of {@link User} to an instance of {@link com.microsoft.graph.models.extensions.User}
-     * @return New instance of an Azure AD {@link com.microsoft.graph.models.extensions.User}
+     * Convert this instance of {@link User} to an instance of {@link com.microsoft.graph.models.User}
+     * @return New instance of an Azure AD {@link com.microsoft.graph.models.User}
      * containing the same details as this class.
      */
-    public com.microsoft.graph.models.extensions.User toAzureUser() {
-        com.microsoft.graph.models.extensions.User user = new com.microsoft.graph.models.extensions.User();
+    public com.microsoft.graph.models.User toAzureUser() {
+        com.microsoft.graph.models.User user = new com.microsoft.graph.models.User();
         user.id = this.azureImmutableId;
         user.onPremisesImmutableId = this.onPremisesImmutableId;
         user.givenName = this.givenName;
