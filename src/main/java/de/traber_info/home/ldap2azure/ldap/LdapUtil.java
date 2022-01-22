@@ -1,7 +1,6 @@
 package de.traber_info.home.ldap2azure.ldap;
 
 import de.traber_info.home.ldap2azure.model.config.LdapAttribute;
-import org.h2.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +69,7 @@ public class LdapUtil {
         properties.put(Context.SECURITY_CREDENTIALS, bindPassword);
         properties.put(Context.SECURITY_AUTHENTICATION, "simple");
         // Specify attributes that are binary so they are loaded as byte[] instead of String
-        properties.put("java.naming.ldap.attributes.binary", StringUtils.join(new StringBuilder(), binaryAttributes, " ").toString());
+        properties.put("java.naming.ldap.attributes.binary", String.join(" ", binaryAttributes));
         if (ignoreSSLValidation) properties.put("java.naming.ldap.factory.socket", "de.traber_info.home.ldap2azure.ldap.AcceptAllSSLSocketFactory");
 
         this.searchBase = searchBase;
